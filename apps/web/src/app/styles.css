@@ -1,0 +1,14 @@
+@keyframes float {
+  0% { transform: translateY(0) }
+  50% { transform: translateY(-10px) }
+  100% { transform: translateY(0) }
+}
+
+.floating-heart {
+  position: absolute;
+  animation: float 3s ease-in-out infinite;
+  animation-delay: var(--delay);
+  left: var(--left);
+  top: var(--top);
+  opacity: var(--opacity);
+}

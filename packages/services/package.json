@@ -1,0 +1,46 @@
+{
+  "name": "@caring-compass/services",
+  "version": "1.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "type-check": "tsc --noEmit",
+    "worker:dev": "tsx src/workers/index.ts",
+    "worker:build": "tsup src/workers/index.ts --format cjs --target node18"
+  },
+  "dependencies": {
+    "@caring-compass/auth": "workspace:*",
+    "@caring-compass/database": "workspace:*",
+    "@sendgrid/mail": "^8.1.0",
+    "@supabase/supabase-js": "^2.38.4",
+    "axios": "^1.6.2",
+    "bullmq": "^4.15.4",
+    "dotenv": "^17.2.1",
+    "ioredis": "^5.3.2",
+    "mime-types": "^2.1.35",
+    "node-cron": "^3.0.3",
+    "pandadoc-node-client": "^4.2.0",
+    "pdf-lib": "^1.17.1",
+    "resend": "^2.1.0",
+    "sharp": "^0.33.1",
+    "stripe": "^14.9.0",
+    "twilio": "^4.19.3",
+    "winston": "^3.11.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^20.19.11",
+    "@types/node-cron": "^3.0.11",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "tsup": "^8.0.1",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,1385 @@
+// Caring Compass Home Care - Complete Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== CORE USER MANAGEMENT =====
+model User {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email       String   @unique
+  role        UserRole
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastLoginAt DateTime?
+
+  // Profile relationships (one-to-one based on role)
+  clientProfile    ClientProfile?
+  caregiverProfile CaregiverProfile?
+  coordinatorProfile CoordinatorProfile?
+  familyProfile    FamilyProfile?
+
+  // Activity tracking
+  auditLogs    AuditLog[]
+  messages     Message[]
+  documents    Document[]
+  incidentReports IncidentReport[] @relation("IncidentReportReporter")
+  
+  // User invites sent by this user
+  invitesSent  UserInvite[] @relation("UserInvites")
+  
+  // Appointments
+  createdAppointments  Appointment[] @relation("CreatedAppointments")
+  clientAppointments   Appointment[] @relation("ClientAppointments")
+  caregiverAppointments Appointment[] @relation("CaregiverAppointments")
+  
+  @@map("users")
+}
+
+enum UserRole {
+  CLIENT
+  FAMILY
+  CAREGIVER
+  COORDINATOR
+  ADMIN
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
+}
+
+model Appointment {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date        DateTime
+  duration    Int       // Duration in minutes
+  notes       String?
+  status      AppointmentStatus @default(SCHEDULED)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  createdBy   User      @relation("CreatedAppointments", fields: [createdById], references: [id])
+  createdById String    @db.Uuid
+  client      User?     @relation("ClientAppointments", fields: [clientId], references: [id])
+  clientId    String?   @db.Uuid
+  caregiver   User?     @relation("CaregiverAppointments", fields: [caregiverId], references: [id])
+  caregiverId String?   @db.Uuid
+
+  @@index([date])
+  @@index([clientId])
+  @@index([caregiverId])
+  @@map("appointments")
+}
+
+// ===== CLIENT MANAGEMENT =====
+model ClientProfile {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String    @unique @db.Uuid
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Information
+  firstName       String
+  lastName        String
+  dateOfBirth     DateTime
+  gender          Gender?
+  preferredName   String?
+  profilePhoto    String?
+  
+  // Contact Information
+  primaryPhone    String
+  secondaryPhone  String?
+  emergencyContact EmergencyContact[]
+  
+  // Location
+  address         Address[]
+  
+  // Care Information
+  planOfCare      PlanOfCare?
+  medicalInfo     MedicalInfo?
+  preferences     ClientPreferences?
+  
+  // Status
+  status          ClientStatus @default(INQUIRY)
+  enrollmentDate  DateTime?
+  
+  // Relationships
+  visits          Visit[]
+  invoices        Invoice[]
+  familyMembers   FamilyProfile[]
+  messages        MessageThread[]  @relation("ClientMessages")
+  documents       Document[]
+  incidentReports IncidentReport[]
+  coordinators    ClientCoordinator[]
+  ratings         CaregiverRating[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("client_profiles")
+}
+
+model FamilyProfile {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String  @unique @db.Uuid
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  clientId        String  @db.Uuid
+  client          ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  firstName       String
+  lastName        String
+  relationship    String // "son", "daughter", "spouse", etc.
+  primaryPhone    String
+  secondaryPhone  String?
+  email           String
+  
+  // Permissions
+  canViewSchedule Boolean @default(true)
+  canViewBilling  Boolean @default(false)
+  canReceiveUpdates Boolean @default(true)
+  
+  // Preferences
+  preferredContact ContactMethod @default(EMAIL)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("family_profiles")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum ClientStatus {
+  INQUIRY
+  ASSESSMENT_SCHEDULED
+  ASSESSMENT_COMPLETED
+  PENDING_APPROVAL
+  ACTIVE
+  ON_HOLD
+  DISCHARGED
+}
+
+enum ContactMethod {
+  EMAIL
+  PHONE
+  SMS
+  MAIL
+}
+
+// ===== CAREGIVER MANAGEMENT =====
+model CaregiverProfile {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String    @unique @db.Uuid
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Information
+  firstName         String
+  lastName          String
+  dateOfBirth       DateTime
+  gender            Gender?
+  profilePhoto      String?
+  
+  // Contact Information
+  primaryPhone      String
+  secondaryPhone    String?
+  address           Address[]
+  emergencyContact  EmergencyContact[]
+  
+  // Employment Information
+  employeeId        String?   @unique
+  hireDate          DateTime?
+  status            CaregiverStatus @default(APPLICATION_SUBMITTED)
+  employmentType    EmploymentType @default(PART_TIME)
+  
+  // Qualifications
+  credentials       CaregiverCredential[]
+  skills            CaregiverSkill[]
+  languages         CaregiverLanguage[]
+  
+  // Availability & Preferences
+  availability      CaregiverAvailability[]
+  preferences       CaregiverPreferences?
+  schedulePreferences SchedulePreference[]
+  
+  // Work History
+  visits            Visit[]
+  timesheets        Timesheet[]
+  
+  // Performance
+  ratings           CaregiverRating[]
+  
+  // Coordinator relationships
+  coordinators      CaregiverCoordinator[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("caregiver_profiles")
+}
+
+enum CaregiverStatus {
+  APPLICATION_SUBMITTED
+  BACKGROUND_CHECK_PENDING
+  BACKGROUND_CHECK_APPROVED
+  BACKGROUND_CHECK_FAILED
+  CREDENTIALS_PENDING
+  TRAINING_REQUIRED
+  TRAINING_COMPLETED
+  ACTIVE
+  INACTIVE
+  TERMINATED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  ON_CALL
+  CONTRACT
+}
+
+model CaregiverCredential {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caregiverId     String   @db.Uuid
+  caregiver       CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  
+  type            CredentialType
+  credentialNumber String?
+  issuingOrganization String
+  issueDate       DateTime
+  expirationDate  DateTime?
+  documentUrl     String?
+  status          CredentialStatus @default(PENDING_VERIFICATION)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("caregiver_credentials")
+}
+
+enum CredentialType {
+  CNA // Certified Nursing Assistant
+  PCA // Personal Care Aide
+  HHA // Home Health Aide
+  CPR
+  FIRST_AID
+  TB_TEST
+  BACKGROUND_CHECK
+  DRIVERS_LICENSE
+  AUTO_INSURANCE
+  PROFESSIONAL_LIABILITY
+}
+
+enum CredentialStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  EXPIRED
+  REJECTED
+}
+
+model CaregiverSkill {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caregiverId String   @db.Uuid
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  
+  skill       SkillType
+  level       SkillLevel @default(BASIC)
+  certifiedAt DateTime?
+  
+  @@unique([caregiverId, skill])
+  @@map("caregiver_skills")
+}
+
+enum SkillType {
+  PERSONAL_CARE
+  MEDICATION_REMINDERS
+  MEAL_PREPARATION
+  LIGHT_HOUSEKEEPING
+  TRANSPORTATION
+  COMPANIONSHIP
+  DEMENTIA_CARE
+  MOBILITY_ASSISTANCE
+  TRANSFER_ASSISTANCE
+  INCONTINENCE_CARE
+  WOUND_CARE
+  VITAL_SIGNS
+  OXYGEN_THERAPY
+}
+
+enum SkillLevel {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+model CaregiverLanguage {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caregiverId String   @db.Uuid
+  caregiver   CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  
+  language    String
+  proficiency LanguageProficiency
+  
+  @@unique([caregiverId, language])
+  @@map("caregiver_languages")
+}
+
+enum LanguageProficiency {
+  BASIC
+  CONVERSATIONAL
+  FLUENT
+  NATIVE
+}
+
+model CaregiverAvailability {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caregiverId     String   @db.Uuid
+  caregiver       CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  
+  dayOfWeek       DayOfWeek
+  startTime       String   // Format: "09:00"
+  endTime         String   // Format: "17:00"
+  isRecurring     Boolean  @default(true)
+  effectiveDate   DateTime @default(now())
+  endDate         DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("caregiver_availability")
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+// ===== COORDINATOR MANAGEMENT =====
+model CoordinatorProfile {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @unique @db.Uuid
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  firstName   String
+  lastName    String
+  title       String?
+  department  String?
+  
+  // Assigned clients and caregivers
+  assignedClients    ClientCoordinator[]
+  assignedCaregivers CaregiverCoordinator[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("coordinator_profiles")
+}
+
+model ClientCoordinator {
+  clientId      String @db.Uuid
+  coordinatorId String @db.Uuid
+  
+  client        ClientProfile      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  coordinator   CoordinatorProfile @relation(fields: [coordinatorId], references: [id], onDelete: Cascade)
+  
+  assignedAt    DateTime @default(now())
+  isPrimary     Boolean  @default(true)
+  
+  @@id([clientId, coordinatorId])
+  @@map("client_coordinators")
+}
+
+model CaregiverCoordinator {
+  caregiverId   String @db.Uuid
+  coordinatorId String @db.Uuid
+  
+  caregiver     CaregiverProfile   @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  coordinator   CoordinatorProfile @relation(fields: [coordinatorId], references: [id], onDelete: Cascade)
+  
+  assignedAt    DateTime @default(now())
+  
+  @@id([caregiverId, coordinatorId])
+  @@map("caregiver_coordinators")
+}
+
+// ===== CARE PLANNING =====
+model PlanOfCare {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId          String   @unique @db.Uuid
+  client            ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  // Plan Details
+  effectiveDate     DateTime
+  expirationDate    DateTime?
+  totalWeeklyHours  Int
+  
+  // Care Goals
+  goals             CareGoal[]
+  tasks             ServiceTask[]
+  
+  // Schedule Requirements
+  preferredSchedule SchedulePreference[] @relation("PreferredSchedule")
+  
+  // Status
+  status            PlanStatus @default(DRAFT)
+  approvedAt        DateTime?
+  approvedBy        String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("plans_of_care")
+}
+
+enum PlanStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+}
+
+model CareGoal {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  planOfCareId  String   @db.Uuid
+  planOfCare    PlanOfCare @relation(fields: [planOfCareId], references: [id], onDelete: Cascade)
+  
+  title         String
+  description   String
+  targetDate    DateTime?
+  priority      Priority @default(MEDIUM)
+  status        GoalStatus @default(IN_PROGRESS)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("care_goals")
+}
+
+model ServiceTask {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  planOfCareId  String   @db.Uuid
+  planOfCare    PlanOfCare @relation(fields: [planOfCareId], references: [id], onDelete: Cascade)
+  
+  name          String
+  description   String?
+  category      TaskCategory
+  frequency     TaskFrequency
+  estimatedDuration Int // in minutes
+  requiredSkills SkillType[]
+  
+  isRequired    Boolean @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("service_tasks")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+  DISCONTINUED
+}
+
+enum TaskCategory {
+  PERSONAL_CARE
+  MEDICATION_MANAGEMENT
+  HOUSEHOLD_TASKS
+  NUTRITION
+  TRANSPORTATION
+  COMPANIONSHIP
+  SAFETY_SUPERVISION
+  EXERCISE_MOBILITY
+}
+
+enum TaskFrequency {
+  EVERY_VISIT
+  DAILY
+  WEEKLY
+  BI_WEEKLY
+  MONTHLY
+  AS_NEEDED
+}
+
+// ===== SCHEDULING & VISITS =====
+model Visit {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Participants
+  clientId        String   @db.Uuid
+  client          ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  caregiverId     String?  @db.Uuid
+  caregiver       CaregiverProfile? @relation(fields: [caregiverId], references: [id], onDelete: SetNull)
+  
+  // Schedule
+  scheduledStart  DateTime
+  scheduledEnd    DateTime
+  actualStart     DateTime?
+  actualEnd       DateTime?
+  
+  // Visit Details
+  status          VisitStatus @default(SCHEDULED)
+  visitType       VisitType @default(REGULAR_CARE)
+  tasks           VisitTask[]
+  
+  // EVV (Electronic Visit Verification)
+  evvEvents       EVVEvent[]
+  
+  // Documentation
+  notes           String?
+  clientSignature String? // Base64 or file path
+  caregiverNotes  String?
+  
+  // Billing
+  billableHours   Decimal?  @db.Decimal(4,2)
+  mileage         Decimal?  @db.Decimal(6,2)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("visits")
+}
+
+enum VisitStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW_CLIENT
+  NO_SHOW_CAREGIVER
+  LATE_CANCELLATION
+}
+
+enum VisitType {
+  REGULAR_CARE
+  RESPITE_CARE
+  EMERGENCY_CARE
+  ASSESSMENT
+  SUPERVISION
+}
+
+model VisitTask {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId     String   @db.Uuid
+  visit       Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  
+  taskName    String
+  category    TaskCategory
+  isCompleted Boolean  @default(false)
+  notes       String?
+  
+  completedAt DateTime?
+  
+  @@map("visit_tasks")
+}
+
+model EVVEvent {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId     String   @db.Uuid
+  visit       Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  
+  eventType   EVVEventType
+  timestamp   DateTime @default(now())
+  
+  // Location data
+  latitude    Decimal? @db.Decimal(10,8)
+  longitude   Decimal? @db.Decimal(11,8)
+  
+  // Device & verification data
+  deviceId    String?
+  ipAddress   String?
+  userAgent   String?
+  
+  // Additional verification
+  telephony   String? // Phone number used if phone verification
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("evv_events")
+}
+
+enum EVVEventType {
+  CLOCK_IN
+  CLOCK_OUT
+  BREAK_START
+  BREAK_END
+  LOCATION_UPDATE
+}
+
+// ===== BILLING & PAYMENTS =====
+model Invoice {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId        String   @db.Uuid
+  client          ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  // Invoice Details
+  invoiceNumber   String   @unique
+  billingPeriodId String   @db.Uuid
+  billingPeriod   DateRange @relation("InvoiceBillingPeriod", fields: [billingPeriodId], references: [id])
+  
+  // Line Items
+  lineItems       InvoiceLineItem[]
+  
+  // Totals
+  subtotal        Decimal  @db.Decimal(10,2)
+  taxAmount       Decimal  @db.Decimal(10,2) @default(0)
+  totalAmount     Decimal  @db.Decimal(10,2)
+  
+  // Status & Dates
+  status          InvoiceStatus @default(DRAFT)
+  issuedAt        DateTime?
+  dueDate         DateTime?
+  paidAt          DateTime?
+  
+  // Payment
+  payments        Payment[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ISSUED
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId   String   @db.Uuid
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  description String
+  quantity    Decimal  @db.Decimal(6,2)
+  unitPrice   Decimal  @db.Decimal(8,2)
+  totalPrice  Decimal  @db.Decimal(10,2)
+  
+  // Optional visit reference
+  visitId     String?  @db.Uuid
+  
+  @@map("invoice_line_items")
+}
+
+model Payment {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId       String   @db.Uuid
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  amount          Decimal  @db.Decimal(10,2)
+  paymentMethod   PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  
+  // External payment references
+  stripePaymentId String?
+  stripeChargeId  String?
+  
+  // Payment details
+  processedAt     DateTime?
+  failureReason   String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  ACH
+  CHECK
+  CASH
+  INSURANCE
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+// ===== TIMESHEET & PAYROLL =====
+model Timesheet {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caregiverId     String   @db.Uuid
+  caregiver       CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  
+  payPeriodId     String   @db.Uuid
+  payPeriod       DateRange @relation("TimesheetPayPeriod", fields: [payPeriodId], references: [id])
+  
+  // Hours
+  regularHours    Decimal  @db.Decimal(6,2) @default(0)
+  overtimeHours   Decimal  @db.Decimal(6,2) @default(0)
+  holidayHours    Decimal  @db.Decimal(6,2) @default(0)
+  
+  // Mileage
+  totalMileage    Decimal  @db.Decimal(8,2) @default(0)
+  mileageRate     Decimal  @db.Decimal(4,3) @default(0.67) // IRS standard rate
+  
+  // Status
+  status          TimesheetStatus @default(DRAFT)
+  submittedAt     DateTime?
+  approvedAt      DateTime?
+  approvedBy      String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("timesheets")
+}
+
+enum TimesheetStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
+// ===== MESSAGING SYSTEM =====
+model Message {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  threadId      String   @db.Uuid
+  thread        MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  
+  senderId      String   @db.Uuid
+  sender        User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  
+  content       String
+  messageType   MessageType @default(TEXT)
+  
+  // Read status
+  readBy        MessageRead[]
+  
+  // Attachments
+  attachments   MessageAttachment[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("messages")
+}
+
+model MessageThread {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  subject       String?
+  threadType    ThreadType @default(GENERAL)
+  
+  // Participants
+  participants  ThreadParticipant[]
+  messages      Message[]
+  
+  // Relations
+  client        ClientProfile? @relation("ClientMessages", fields: [clientId], references: [id])
+  clientId      String? @db.Uuid
+  
+  // Status
+  isActive      Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("message_threads")
+}
+
+model ThreadParticipant {
+  threadId      String   @db.Uuid
+  userId        String   @db.Uuid
+  
+  thread        MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  
+  joinedAt      DateTime @default(now())
+  leftAt        DateTime?
+  
+  @@id([threadId, userId])
+  @@map("thread_participants")
+}
+
+model MessageRead {
+  messageId     String   @db.Uuid
+  userId        String   @db.Uuid
+  
+  message       Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  readAt        DateTime @default(now())
+  
+  @@id([messageId, userId])
+  @@map("message_reads")
+}
+
+model MessageAttachment {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  messageId     String   @db.Uuid
+  message       Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  fileName      String
+  fileSize      Int
+  mimeType      String
+  fileUrl       String
+  
+  createdAt     DateTime @default(now())
+  
+  @@map("message_attachments")
+}
+
+enum MessageType {
+  TEXT
+  SYSTEM
+  INCIDENT_REPORT
+  REMINDER
+}
+
+enum ThreadType {
+  GENERAL
+  INCIDENT
+  COORDINATION
+  FAMILY_UPDATES
+  BILLING
+}
+
+// ===== DOCUMENT MANAGEMENT =====
+model Document {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Ownership
+  uploadedById  String   @db.Uuid
+  uploadedBy    User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  clientId      String?  @db.Uuid
+  client        ClientProfile? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  // Document Details
+  fileName      String
+  originalName  String
+  fileSize      Int
+  mimeType      String
+  fileUrl       String
+  
+  // Metadata
+  documentType  DocumentType
+  tags          String[]
+  description   String?
+  
+  // Status
+  status        DocumentStatus @default(ACTIVE)
+  
+  // Security
+  isEncrypted   Boolean  @default(false)
+  accessLevel   AccessLevel @default(PRIVATE)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("documents")
+}
+
+enum DocumentType {
+  SERVICE_AGREEMENT
+  CARE_PLAN
+  ASSESSMENT
+  INCIDENT_REPORT
+  CREDENTIAL
+  IDENTIFICATION
+  INSURANCE_CARD
+  EMERGENCY_CONTACT
+  MEDICAL_FORM
+  PHOTO
+  OTHER
+}
+
+enum DocumentStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+enum AccessLevel {
+  PUBLIC
+  INTERNAL
+  PRIVATE
+  CONFIDENTIAL
+}
+
+// ===== INCIDENT REPORTING =====
+model IncidentReport {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId        String   @db.Uuid
+  client          ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  reportedById    String   @db.Uuid
+  reportedBy      User     @relation("IncidentReportReporter", fields: [reportedById], references: [id], onDelete: Cascade)
+  
+  // Incident Details
+  incidentType    IncidentType
+  severity        IncidentSeverity
+  incidentDate    DateTime
+  description     String
+  
+  // Location
+  location        String?
+  
+  // People Involved
+  injuryOccurred  Boolean  @default(false)
+  medicalAttention Boolean @default(false)
+  
+  // Response
+  actionsTaken    String?
+  followUpRequired Boolean @default(false)
+  
+  // Status
+  status          IncidentStatus @default(REPORTED)
+  investigatedAt  DateTime?
+  investigatedBy  String?
+  resolution      String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("incident_reports")
+}
+
+enum IncidentType {
+  FALL
+  MEDICATION_ERROR
+  INJURY
+  EMERGENCY_ROOM_VISIT
+  HOSPITALIZATION
+  EQUIPMENT_MALFUNCTION
+  THEFT
+  ABUSE_ALLEGATION
+  BEHAVIORAL_INCIDENT
+  OTHER
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  REPORTED
+  UNDER_INVESTIGATION
+  RESOLVED
+  CLOSED
+}
+
+// ===== RATINGS & FEEDBACK =====
+model CaregiverRating {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caregiverId     String   @db.Uuid
+  caregiver       CaregiverProfile @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+  
+  clientId        String   @db.Uuid
+  client          ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  visitId         String?  @db.Uuid
+  
+  // Ratings (1-5 scale)
+  overallRating   Int
+  punctualityRating Int?
+  qualityRating   Int?
+  communicationRating Int?
+  
+  // Feedback
+  comments        String?
+  wouldRecommend  Boolean?
+  
+  createdAt       DateTime @default(now())
+  
+  @@map("caregiver_ratings")
+}
+
+// ===== USER INVITES =====
+model UserInvite {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email       String
+  role        UserRole
+  invitedBy   String   @db.Uuid
+  inviteCode  String   @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  
+  inviter     User     @relation("UserInvites", fields: [invitedBy], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("user_invites")
+}
+
+// ===== AUDIT & COMPLIANCE =====
+model AuditLog {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  userId        String?  @db.Uuid
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  action        AuditAction
+  resourceType  String
+  resourceId    String?
+  
+  // Change details
+  oldValues     Json?
+  newValues     Json?
+  
+  // Request metadata
+  ipAddress     String?
+  userAgent     String?
+  
+  timestamp     DateTime @default(now())
+  
+  @@map("audit_logs")
+}
+
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  IMPORT
+}
+
+// ===== SHARED VALUE MODELS =====
+model Address {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  street1     String
+  street2     String?
+  city        String
+  state       String
+  zipCode     String
+  country     String  @default("US")
+  
+  // Relations
+  clientProfile ClientProfile? @relation(fields: [clientProfileId], references: [id])
+  clientProfileId String? @db.Uuid
+  
+  caregiverProfile CaregiverProfile? @relation(fields: [caregiverProfileId], references: [id])
+  caregiverProfileId String? @db.Uuid
+  
+  emergencyContact EmergencyContact? @relation(fields: [emergencyContactId], references: [id])
+  emergencyContactId String? @db.Uuid
+
+  @@map("addresses")
+}
+
+model EmergencyContact {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  relationship  String
+  primaryPhone  String
+  secondaryPhone String?
+  
+  // Relations
+  address       Address[]
+  clientProfile ClientProfile? @relation(fields: [clientProfileId], references: [id])
+  clientProfileId String? @db.Uuid
+  
+  caregiverProfile CaregiverProfile? @relation(fields: [caregiverProfileId], references: [id])
+  caregiverProfileId String? @db.Uuid
+
+  @@map("emergency_contacts")
+}
+
+model MedicalInfo {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  allergies     String[]
+  medications   String[]
+  conditions    String[]
+  physicians    Json[]
+  insuranceInfo Json?
+  
+  // Relations
+  clientProfile ClientProfile? @relation(fields: [clientProfileId], references: [id])
+  clientProfileId String? @unique @db.Uuid
+
+  @@map("medical_info")
+}
+
+model ClientPreferences {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  genderPreference  String?
+  languagePreference String[]
+  petAllergies     Boolean @default(false)
+  smokingPolicy    String?
+  specialRequests  String?
+  
+  // Relations
+  clientProfile    ClientProfile? @relation(fields: [clientProfileId], references: [id])
+  clientProfileId  String? @unique @db.Uuid
+
+  @@map("client_preferences")
+}
+
+model CaregiverPreferences {
+  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  maxTravelDistance       Int      @default(25) // miles
+  preferredClients       String[]
+  availableForEmergency  Boolean  @default(false)
+  transportationAvailable Boolean  @default(true)
+  
+  // Relations
+  caregiverProfile       CaregiverProfile? @relation(fields: [caregiverProfileId], references: [id])
+  caregiverProfileId     String? @unique @db.Uuid
+
+  @@map("caregiver_preferences")
+}
+
+model SchedulePreference {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dayOfWeek   DayOfWeek
+  startTime   String
+  endTime     String
+  duration    Int // minutes
+  
+  // Relations
+  caregiverProfile CaregiverProfile? @relation(fields: [caregiverProfileId], references: [id])
+  caregiverProfileId String? @db.Uuid
+  
+  planOfCare PlanOfCare? @relation("PreferredSchedule", fields: [planOfCareId], references: [id])
+  planOfCareId String? @db.Uuid
+
+  @@map("schedule_preferences")
+}
+
+model DateRange {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  startDate   DateTime
+  endDate     DateTime
+  
+  // Relations
+  invoices    Invoice[] @relation("InvoiceBillingPeriod")
+  timesheets  Timesheet[] @relation("TimesheetPayPeriod")
+
+  @@map("date_ranges")
+}
+
+// ===== LOGGING & MONITORING =====
+model EmailLog {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  to              String
+  from            String
+  subject         String
+  templateId      String?
+  templateData    Json?
+  htmlContent     String?
+  textContent     String?
+  
+  // Status
+  status          EmailStatus @default(PENDING)
+  deliveryStatus  String?
+  errorMessage    String?
+  
+  // Metadata
+  provider        String   @default("SENDGRID")
+  messageId       String?
+  priority        MessagePriority @default(NORMAL)
+  
+  // Timestamps
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  openedAt        DateTime?
+  clickedAt       DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("email_logs")
+}
+
+model SmsLog {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  to              String
+  from            String?
+  message         String
+  templateId      String?
+  templateData    Json?
+  
+  // Status
+  status          SmsStatus @default(PENDING)
+  deliveryStatus  String?
+  errorMessage    String?
+  
+  // Metadata
+  provider        String   @default("TWILIO")
+  messageId       String?
+  priority        MessagePriority @default(NORMAL)
+  
+  // Timestamps
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("sms_logs")
+}
+
+model SystemMetrics {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  metricType      String
+  metricName      String
+  value           Decimal  @db.Decimal(15,4)
+  unit            String?
+  tags            Json?
+  
+  timestamp       DateTime @default(now())
+  
+  @@index([metricType, metricName, timestamp])
+  @@map("system_metrics")
+}
+
+model JobExecution {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  jobId           String
+  jobName         String
+  queueName       String
+  
+  // Status
+  status          JobStatus @default(PENDING)
+  progress        Int       @default(0)
+  
+  // Execution details
+  startedAt       DateTime?
+  completedAt     DateTime?
+  failedAt        DateTime?
+  
+  // Data
+  jobData         Json?
+  result          Json?
+  error           String?
+  
+  // Retry information
+  attempts        Int       @default(0)
+  maxAttempts     Int       @default(3)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([queueName, status])
+  @@index([jobName, status])
+  @@map("job_executions")
+}
+
+model SystemSettings {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key             String   @unique
+  value           Json
+  description     String?
+  category        String   @default("GENERAL")
+  
+  // Metadata
+  isEncrypted     Boolean  @default(false)
+  isReadOnly      Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("system_settings")
+}
+
+// ===== ENUMS FOR LOGGING =====
+enum EmailStatus {
+  PENDING
+  SENT
+  DELIVERED
+  BOUNCED
+  FAILED
+  OPENED
+  CLICKED
+}
+
+enum SmsStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  UNDELIVERED
+}
+
+enum MessagePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum JobStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  FAILED
+  DELAYED
+  CANCELLED
+}
+
+enum CareRequestStatus {
+  PENDING
+  CONTACTED
+  ASSESSMENT_SCHEDULED
+  ASSESSMENT_COMPLETED
+  CARE_PLAN_CREATED
+  SERVICE_STARTED
+  CANCELLED
+  CLOSED
+}
+
+// Care Request model for tracking initial care inquiries
+model CareRequest {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  email       String
+  phone       String
+  careType    String
+  startDate   DateTime
+  message     String?
+  status      CareRequestStatus @default(PENDING)
+  submittedAt DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Tracking
+  assignedTo  String?         @db.Uuid
+  notes       String?
+}

@@ -1,0 +1,49 @@
+{
+  "timestamp": "2025-08-19T17:54:14.375Z",
+  "overallScore": 14.166666666666666,
+  "status": "FAILED",
+  "results": {
+    "security": {
+      "score": 0,
+      "status": "FAILED",
+      "error": "SecurityAudit is not a constructor"
+    },
+    "accessibility": {
+      "score": 0,
+      "status": "FAILED",
+      "error": "AccessibilityAudit is not a constructor"
+    },
+    "performance": {
+      "score": 0,
+      "status": "FAILED",
+      "error": "Invalid or unexpected token"
+    },
+    "disasterRecovery": {
+      "score": 0,
+      "status": "FAILED",
+      "error": "DisasterRecoveryTest is not a constructor"
+    },
+    "testing": {
+      "score": 0,
+      "status": "FAILED",
+      "error": "spawnSync C:\\WINDOWS\\system32\\cmd.exe ENOBUFS"
+    },
+    "overall": {
+      "score": 14.166666666666666,
+      "status": "FAILED"
+    },
+    "structure": {
+      "score": 94.44444444444444,
+      "passed": 17,
+      "total": 18,
+      "status": "FAILED"
+    }
+  },
+  "criticalFailures": [
+    "Missing required file: apps/web/tailwind.config.ts",
+    "Security validation failed: SecurityAudit is not a constructor",
+    "Accessibility validation failed: AccessibilityAudit is not a constructor",
+    "Test failures detected: spawnSync C:\\WINDOWS\\system32\\cmd.exe ENOBUFS"
+  ],
+  "productionReady": false
+}
