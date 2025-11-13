@@ -1,11 +1,8 @@
 import { z } from 'zod'
 import { createTRPCRouter, adminProcedure, staffProcedure } from '../trpc/trpc'
 import { RouterTypes } from '../trpc/types'
-import { getPrismaClient } from '@caring-compass/database/src/utils'
 import { TRPCError } from '@trpc/server'
 import { schemas } from '../schemas'
-
-const prisma = getPrismaClient()
 
 /**
  * Admin Router - Administrative functions and system management
@@ -25,10 +22,10 @@ export const adminRouter = createTRPCRouter({
         recentActivities
       ] = await Promise.all([
         // Total clients
-        prisma.clientProfile.count(),
+        ctx.prisma.clientProfile.count(),
         
         // Active clients (with visits in last 30 days)
-        prisma.clientProfile.count({
+        ctx.prisma.clientProfile.count({
           where: {
             status: 'ACTIVE',
             visits: {
@@ -42,15 +39,15 @@ export const adminRouter = createTRPCRouter({
         }),
         
         // Total caregivers
-        prisma.caregiverProfile.count(),
+        ctx.prisma.caregiverProfile.count(),
         
         // Active caregivers
-        prisma.caregiverProfile.count({
+        ctx.prisma.caregiverProfile.count({
           where: { status: 'ACTIVE' }
         }),
         
         // Today's visits
-        prisma.visit.count({
+        ctx.prisma.visit.count({
           where: {
             scheduledStart: {
               gte: new Date(new Date().setHours(0, 0, 0, 0)),
@@ -60,12 +57,12 @@ export const adminRouter = createTRPCRouter({
         }),
         
         // Pending invoices
-        prisma.invoice.count({
+        ctx.prisma.invoice.count({
           where: { status: 'PENDING' }
         }),
         
         // Recent activities from audit log
-        prisma.auditLog.findMany({
+        ctx.prisma.auditLog.findMany({
           take: 10,
           orderBy: { timestamp: 'desc' },
           include: {
@@ -174,7 +171,7 @@ export const adminRouter = createTRPCRouter({
       }
 
       const [users, total] = await Promise.all([
-        prisma.user.findMany({
+        ctx.prisma.user.findMany({
           where,
           skip,
           take: limit,
@@ -185,7 +182,7 @@ export const adminRouter = createTRPCRouter({
           },
           orderBy: { createdAt: 'desc' }
         }),
-        prisma.user.count({ where })
+        ctx.prisma.user.count({ where })
       ])
 
       return {
@@ -256,7 +253,7 @@ export const adminRouter = createTRPCRouter({
       // In a real app, you'd update the settings in database
       // For now, just return success
       
-      await prisma.auditLog.create({
+      await ctx.prisma.auditLog.create({
         data: {
           userId: ctx.user.id,
           action: 'UPDATE',
@@ -296,7 +293,7 @@ export const adminRouter = createTRPCRouter({
       }
 
       const [logs, total] = await Promise.all([
-        prisma.auditLog.findMany({
+        ctx.prisma.auditLog.findMany({
           where,
           skip,
           take: limit,
@@ -313,7 +310,7 @@ export const adminRouter = createTRPCRouter({
           },
           orderBy: { timestamp: 'desc' }
         }),
-        prisma.auditLog.count({ where })
+        ctx.prisma.auditLog.count({ where })
       ])
 
       return {
@@ -351,7 +348,7 @@ export const adminRouter = createTRPCRouter({
 
 // Helper functions for report generation
 async function generateUtilizationReport(startDate: Date, endDate: Date, filters?: any) {
-  const visits = await prisma.visit.findMany({
+  const visits = await ctx.prisma.visit.findMany({
     where: {
       scheduledStart: { gte: startDate, lte: endDate },
       ...(filters?.clientIds && { clientId: { in: filters.clientIds } }),
@@ -394,7 +391,7 @@ async function generateUtilizationReport(startDate: Date, endDate: Date, filters
 }
 
 async function generateRevenueReport(startDate: Date, endDate: Date, filters?: any) {
-  const invoices = await prisma.invoice.findMany({
+  const invoices = await ctx.prisma.invoice.findMany({
     where: {
       createdAt: { gte: startDate, lte: endDate },
       ...(filters?.clientIds && { clientId: { in: filters.clientIds } })
@@ -425,7 +422,7 @@ async function generateRevenueReport(startDate: Date, endDate: Date, filters?: a
 }
 
 async function generateCaregiverRetentionReport(startDate: Date, endDate: Date, filters?: any) {
-  const caregivers = await prisma.caregiverProfile.findMany({
+  const caregivers = await ctx.prisma.caregiverProfile.findMany({
     where: {
       hireDate: { gte: startDate, lte: endDate },
       ...(filters?.caregiverIds && { id: { in: filters.caregiverIds } })

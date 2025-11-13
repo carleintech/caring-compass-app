@@ -17,7 +17,26 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Menu, Phone, Mail } from 'lucide-react'
 
-const publicNavItems = [
+interface NavItem {
+  title: string
+  href: string
+  description?: string
+  items?: Array<{
+    title: string
+    href: string
+    description: string
+  }>
+}
+
+interface AuthNavItem {
+  title: string
+  href: string
+  roles?: string[]
+}
+
+type AllNavItem = NavItem | AuthNavItem
+
+const publicNavItems: NavItem[] = [
   {
     title: 'Home',
     href: '/',
@@ -28,6 +47,11 @@ const publicNavItems = [
     description: 'Learn about our comprehensive home care services',
     items: [
       {
+        title: 'All Services',
+        href: '/services',
+        description: 'Complete overview of our care services',
+      },
+      {
         title: 'Personal Care',
         href: '/services/personal-care',
         description: 'Assistance with daily living activities',
@@ -36,6 +60,16 @@ const publicNavItems = [
         title: 'Companionship',
         href: '/services/companionship',
         description: 'Social support and emotional care',
+      },
+      {
+        title: 'Meal Preparation',
+        href: '/services/meal-preparation',
+        description: 'Nutritious meal planning and cooking',
+      },
+      {
+        title: 'Transportation',
+        href: '/services/transportation',
+        description: 'Safe and reliable transport services',
       },
       {
         title: 'Specialized Care',
@@ -58,7 +92,7 @@ const publicNavItems = [
   },
 ]
 
-const authNavItems = [
+const authNavItems: AuthNavItem[] = [
   {
     title: 'Dashboard',
     href: '/dashboard',
@@ -81,57 +115,61 @@ const authNavItems = [
 ]
 
 interface MainNavProps {
-  isAuthenticated?: boolean
-  userRole?: string
+  readonly isAuthenticated?: boolean
+  readonly userRole?: string
 }
 
 export function MainNav({ isAuthenticated = false, userRole }: MainNavProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = React.useState(false)
 
-  const navItems = isAuthenticated ? authNavItems : publicNavItems
-  const filteredNavItems = navItems.filter(item => 
-    !item.roles || item.roles.includes(userRole || '')
-  )
+  const navItems: AllNavItem[] = isAuthenticated ? authNavItems : publicNavItems
+  const filteredNavItems = navItems.filter((item: AllNavItem) => {
+    const authItem = item as AuthNavItem
+    return !authItem.roles || authItem.roles.includes(userRole || '')
+  })
 
   return (
     <div className="flex items-center space-x-4 lg:space-x-6">
       {/* Desktop Navigation */}
       <NavigationMenu className="hidden lg:flex">
         <NavigationMenuList>
-          {filteredNavItems.map((item) => (
-            <NavigationMenuItem key={item.title}>
-              {item.items ? (
-                <>
-                  <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                      {item.items.map((subItem) => (
-                        <ListItem
-                          key={subItem.title}
-                          title={subItem.title}
-                          href={subItem.href}
-                        >
-                          {subItem.description}
-                        </ListItem>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
-                </>
-              ) : (
-                <Link href={item.href} legacyBehavior passHref>
-                  <NavigationMenuLink
-                    className={cn(
-                      navigationMenuTriggerStyle(),
-                      pathname === item.href && 'bg-accent text-accent-foreground'
-                    )}
-                  >
-                    {item.title}
-                  </NavigationMenuLink>
-                </Link>
-              )}
-            </NavigationMenuItem>
-          ))}
+          {filteredNavItems.map((item) => {
+            const hasItems = 'items' in item && item.items
+            return (
+              <NavigationMenuItem key={item.title}>
+                {hasItems ? (
+                  <>
+                    <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                        {(item as NavItem).items?.map((subItem) => (
+                          <ListItem
+                            key={subItem.title}
+                            title={subItem.title}
+                            href={subItem.href}
+                          >
+                            {subItem.description}
+                          </ListItem>
+                        ))}
+                      </ul>
+                    </NavigationMenuContent>
+                  </>
+                ) : (
+                  <Link href={item.href} legacyBehavior passHref>
+                    <NavigationMenuLink
+                      className={cn(
+                        navigationMenuTriggerStyle(),
+                        pathname === item.href && 'bg-accent text-accent-foreground'
+                      )}
+                    >
+                      {item.title}
+                    </NavigationMenuLink>
+                  </Link>
+                )}
+              </NavigationMenuItem>
+            )
+          })}
         </NavigationMenuList>
       </NavigationMenu>
 
@@ -149,41 +187,44 @@ export function MainNav({ isAuthenticated = false, userRole }: MainNavProps) {
               <h2 className="text-lg font-semibold">Navigation</h2>
             </div>
             
-            {filteredNavItems.map((item) => (
-              <div key={item.title}>
-                {item.items ? (
-                  <div className="space-y-2">
-                    <h3 className="font-medium">{item.title}</h3>
-                    <div className="ml-4 space-y-1">
-                      {item.items.map((subItem) => (
-                        <Link
-                          key={subItem.title}
-                          href={subItem.href}
-                          className={cn(
-                            'block rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
-                            pathname === subItem.href && 'bg-accent text-accent-foreground'
-                          )}
-                          onClick={() => setIsOpen(false)}
-                        >
-                          {subItem.title}
-                        </Link>
-                      ))}
+            {filteredNavItems.map((item) => {
+              const hasItems = 'items' in item && item.items
+              return (
+                <div key={item.title}>
+                  {hasItems ? (
+                    <div className="space-y-2">
+                      <h3 className="font-medium">{item.title}</h3>
+                      <div className="ml-4 space-y-1">
+                        {(item as NavItem).items?.map((subItem) => (
+                          <Link
+                            key={subItem.title}
+                            href={subItem.href}
+                            className={cn(
+                              'block rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
+                              pathname === subItem.href && 'bg-accent text-accent-foreground'
+                            )}
+                            onClick={() => setIsOpen(false)}
+                          >
+                            {subItem.title}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      'block rounded-md px-3 py-2 font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
-                      pathname === item.href && 'bg-accent text-accent-foreground'
-                    )}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {item.title}
-                  </Link>
-                )}
-              </div>
-            ))}
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'block rounded-md px-3 py-2 font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+                        pathname === item.href && 'bg-accent text-accent-foreground'
+                      )}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {item.title}
+                    </Link>
+                  )}
+                </div>
+              )
+            })}
             
             {!isAuthenticated && (
               <div className="mt-6 space-y-3 border-t pt-6">

@@ -1,7 +1,6 @@
 {
-  "version": 2,
-  "buildCommand": "cp apps/web/package-standalone.json apps/web/package.json && cp apps/web/next.config.standalone.js apps/web/next.config.js && cd apps/web && npm install && npm run build",
-  "outputDirectory": "apps/web/.next",
-  "installCommand": "echo 'Using custom build command'",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "buildCommand": "npm run build", 
+  "outputDirectory": ".next",
+  "installCommand": "npm install --legacy-peer-deps"
 }

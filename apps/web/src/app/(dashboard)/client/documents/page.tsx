@@ -18,7 +18,6 @@ import {
   FilterIcon,
   FileIcon,
   ImageIcon,
-  PdfIcon,
   FolderIcon,
   CalendarIcon,
   UserIcon,
@@ -163,7 +162,7 @@ const documentCategories = [
 const getFileIcon = (fileType: string) => {
   switch (fileType.toLowerCase()) {
     case 'pdf':
-      return <PdfIcon className="h-8 w-8 text-red-500" />
+      return <FileIcon className="h-8 w-8 text-red-500" />
     case 'jpg':
     case 'jpeg':
     case 'png':

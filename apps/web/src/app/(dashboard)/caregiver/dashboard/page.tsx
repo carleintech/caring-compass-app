@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { BackToHomeButton } from '@/components/ui/back-to-home-button'
 import { 
   Clock, 
   MapPin, 
@@ -120,6 +121,11 @@ export default function CaregiverDashboard() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Back Button */}
+      <div className="flex justify-start">
+        <BackToHomeButton />
+      </div>
+      
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>

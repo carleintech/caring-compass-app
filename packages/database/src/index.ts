@@ -1,6 +1,9 @@
 export { PrismaClient } from '@prisma/client'
 export * from '@prisma/client'
 
+// Re-export utils
+export * from './utils'
+
 // Re-export Supabase client
 import { createClient } from '@supabase/supabase-js'
 export { createClient }

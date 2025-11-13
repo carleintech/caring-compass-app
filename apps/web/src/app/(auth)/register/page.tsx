@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { BackToHomeButton } from '@/components/ui/back-to-home-button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -15,6 +17,7 @@ import { trpc } from '@/lib/trpc'
 import { EyeIcon, EyeOffIcon, CheckCircleIcon } from 'lucide-react'
 
 export default function RegisterPage() {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -22,6 +25,7 @@ export default function RegisterPage() {
     phone: '',
     password: '',
     confirmPassword: '',
+    role: 'CAREGIVER', // Add role selection
     dateOfBirth: '',
     address: '',
     city: '',
@@ -43,6 +47,10 @@ export default function RegisterPage() {
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: () => {
       setSuccess(true)
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        router.push('/login?message=Registration successful. Please sign in.')
+      }, 3000)
     },
     onError: (error) => {
       setError(error.message)
@@ -84,7 +92,7 @@ export default function RegisterPage() {
       email: formData.email,
       phone: formData.phone,
       password: formData.password,
-      role: 'CAREGIVER' // Default role for registration
+      role: formData.role as 'CAREGIVER' | 'CLIENT' | 'FAMILY' // Use selected role
     })
   }
 
@@ -93,33 +101,39 @@ export default function RegisterPage() {
       <Card className="w-full">
         <CardHeader className="text-center">
           <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <CardTitle className="text-green-600">Application Submitted!</CardTitle>
+          <CardTitle className="text-green-600">Registration Successful!</CardTitle>
           <CardDescription>
-            Thank you for your interest in joining Caring Compass. We&apos;ve received your application and will review it within 2-3 business days.
+            Your account has been created successfully. Redirecting you to sign in...
           </CardDescription>
         </CardHeader>
-        <CardFooter>
-          <div className="w-full space-y-2 text-center text-sm text-gray-600">
-            <p>You&apos;ll receive an email with next steps including:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Background check authorization</li>
-              <li>Reference verification</li>
-              <li>Interview scheduling</li>
-              <li>Credential verification</li>
-            </ul>
-            <Link href="/" className="text-blue-600 hover:underline block mt-4">
-              Return to Home
-            </Link>
+        <CardFooter className="flex flex-col gap-4">
+          <div className="w-full text-center">
+            <LoadingSpinner size="sm" className="mx-auto mb-2" />
+            <p className="text-sm text-gray-600">Redirecting in 3 seconds...</p>
           </div>
+          <Button 
+            onClick={() => router.push('/login')}
+            className="w-full"
+          >
+            Go to Sign In Now
+          </Button>
+          <Link href="/" className="text-blue-600 hover:underline text-center">
+            Return to Home
+          </Link>
         </CardFooter>
       </Card>
     )
   }
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle>Join Our Caregiving Team</CardTitle>
+    <div className="space-y-4">
+      <div className="flex justify-start">
+        <BackToHomeButton />
+      </div>
+      
+      <Card className="w-full max-w-2xl">
+        <CardHeader>
+          <CardTitle>Join Our Caregiving Team</CardTitle>
         <CardDescription>
           Apply to become a certified caregiver with Caring Compass
         </CardDescription>
@@ -131,6 +145,24 @@ export default function RegisterPage() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          
+          {/* Account Type Selection */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Account Type</h3>
+            <div className="space-y-2">
+              <Label htmlFor="role">I am registering as a:</Label>
+              <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CAREGIVER">Caregiver - I want to provide care services</SelectItem>
+                  <SelectItem value="CLIENT">Client - I need care services for myself</SelectItem>
+                  <SelectItem value="FAMILY">Family Member - I'm arranging care for a family member</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           
           {/* Personal Information */}
           <div className="space-y-4">
@@ -406,5 +438,6 @@ export default function RegisterPage() {
         </CardFooter>
       </form>
     </Card>
+    </div>
   )
 }

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { BackToHomeButton } from '@/components/ui/back-to-home-button'
 import { 
   Calendar, 
   Clock, 
@@ -155,6 +156,11 @@ export default function ClientDashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Back Button */}
+      <div className="flex justify-start">
+        <BackToHomeButton />
+      </div>
+      
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>

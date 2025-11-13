@@ -1,13 +1,14 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -50,17 +51,7 @@ import {
 } from 'lucide-react'
 
 export default function StunningHomepage() {
-  const [authModal, setAuthModal] = useState({
-    open: false,
-    email: '',
-    password: '',
-    role: '',
-    firstName: '',
-    lastName: '',
-    phone: ''
-  })
   const [serviceModal, setServiceModal] = useState(false)
-  const [authType, setAuthType] = useState('signin')
   const [packageBuilder, setPackageBuilder] = useState({
     personalCare: {},
     companionship: {},
@@ -249,30 +240,6 @@ export default function StunningHomepage() {
     }
   }
 
-  const handleAuth = async (type: 'signin' | 'signup', formData: any) => {
-    try {
-      // This would connect to your auth system
-      // if (type === 'signin') {
-      //   await trpc.auth.signin.mutate(formData)
-      // } else {
-      //   await trpc.auth.signup.mutate(formData)
-      // }
-      
-      alert(`${type === 'signin' ? 'Sign in' : 'Registration'} successful!`)
-      setAuthModal({
-        open: false,
-        email: '',
-        password: '',
-        role: '',
-        firstName: '',
-        lastName: '',
-        phone: ''
-      })
-    } catch (error) {
-      alert('Authentication failed. Please try again.')
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Floating particles background */}
@@ -320,27 +287,23 @@ export default function StunningHomepage() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button 
-                variant="outline"
-                onClick={() => { 
-                  setAuthType('signin'); 
-                  setAuthModal(prev => ({ ...prev, open: true }))
-                }}
-                className="hidden sm:flex"
-              >
-                <LogIn className="mr-2 h-4 w-4" />
-                Sign In
-              </Button>
-              <Button 
-                onClick={() => { 
-                  setAuthType('signup'); 
-                  setAuthModal(prev => ({ ...prev, open: true }))
-                }}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hidden sm:flex"
-              >
-                <UserPlus className="mr-2 h-4 w-4" />
-                Register
-              </Button>
+              <Link href="/login">
+                <Button 
+                  variant="outline"
+                  className="hidden sm:flex"
+                >
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hidden sm:flex"
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Register
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -910,138 +873,6 @@ export default function StunningHomepage() {
               </TabsContent>
             </Tabs>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Authentication Modal */}
-      <Dialog 
-        open={authModal.open} 
-        onOpenChange={(open) => setAuthModal(prev => ({ ...prev, open }))}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">
-              {authType === 'signin' ? 'Welcome Back' : 'Join Caring Compass'}
-            </DialogTitle>
-            <DialogDescription>
-              {authType === 'signin' 
-                ? 'Sign in to access your care dashboard' 
-                : 'Create your account to get started'
-              }
-            </DialogDescription>
-          </DialogHeader>
-
-          <Tabs value={authType} onValueChange={setAuthType}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Register</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin" className="space-y-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input 
-                    type="email" 
-                    placeholder="Enter your email"
-                    value={authModal.email || ''}
-                    onChange={(e) => setAuthModal(prev => ({ ...prev, email: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Password</Label>
-                  <Input 
-                    type="password" 
-                    placeholder="Enter your password"
-                    value={authModal.password || ''}
-                    onChange={(e) => setAuthModal(prev => ({ ...prev, password: e.target.value }))}
-                  />
-                </div>
-                <Button 
-                  onClick={() => handleAuth('signin', { email: authModal.email, password: authModal.password })}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                  disabled={!authModal.email || !authModal.password}
-                >
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Sign In
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="signup" className="space-y-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>User Type</Label>
-                  <Select 
-                    value={authModal.role || ''}
-                    onValueChange={(value) => setAuthModal(prev => ({ ...prev, role: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="client">Client (Need Care)</SelectItem>
-                      <SelectItem value="family">Family Member</SelectItem>
-                      <SelectItem value="caregiver">Caregiver (Job Application)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>First Name</Label>
-                    <Input 
-                      placeholder="First name"
-                      value={authModal.firstName || ''}
-                      onChange={(e) => setAuthModal(prev => ({ ...prev, firstName: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Last Name</Label>
-                    <Input 
-                      placeholder="Last name"
-                      value={authModal.lastName || ''}
-                      onChange={(e) => setAuthModal(prev => ({ ...prev, lastName: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input 
-                    type="email" 
-                    placeholder="Enter your email"
-                    value={authModal.email || ''}
-                    onChange={(e) => setAuthModal(prev => ({ ...prev, email: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Phone</Label>
-                  <Input 
-                    type="tel" 
-                    placeholder="(757) 555-0123"
-                    value={authModal.phone || ''}
-                    onChange={(e) => setAuthModal(prev => ({ ...prev, phone: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Password</Label>
-                  <Input 
-                    type="password" 
-                    placeholder="Create a password"
-                    value={authModal.password || ''}
-                    onChange={(e) => setAuthModal(prev => ({ ...prev, password: e.target.value }))}
-                  />
-                </div>
-                <Button 
-                  onClick={() => handleAuth('signup', authModal)}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                  disabled={!authModal.email || !authModal.password || !authModal.firstName || !authModal.lastName || !authModal.role}
-                >
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Create Account
-                </Button>
-              </div>
-            </TabsContent>
-          </Tabs>
         </DialogContent>
       </Dialog>
 

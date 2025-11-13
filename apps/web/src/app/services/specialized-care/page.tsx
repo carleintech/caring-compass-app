@@ -8,8 +8,6 @@ import { Separator } from '@/components/ui/separator'
 import { 
   Brain, 
   Heart, 
-  Hospital, 
-  Pill, 
   Activity, 
   CheckCircle, 
   Clock, 
@@ -40,7 +38,7 @@ export default function SpecializedCarePage() {
       badge: "Most Popular"
     },
     {
-      icon: <Hospital className="h-8 w-8" />,
+      icon: <Heart className="h-8 w-8" />,
       title: "Post-Hospital Recovery",
       description: "Transitional care to ensure safe recovery at home",
       details: [

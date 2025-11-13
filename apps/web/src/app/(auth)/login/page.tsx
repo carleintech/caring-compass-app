@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,11 +9,15 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { BackToHomeButton } from '@/components/ui/back-to-home-button'
 import { trpc } from '@/lib/trpc'
 import { EyeIcon, EyeOffIcon } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const successMessage = searchParams.get('message')
+  
   const [formState, setFormState] = useState({
     email: '',
     password: '',
@@ -70,15 +74,28 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Sign In</CardTitle>
-        <CardDescription>
-          Enter your credentials to access your account
-        </CardDescription>
-      </CardHeader>
+    <div className="space-y-4">
+      <div className="flex justify-start">
+        <BackToHomeButton />
+      </div>
+      
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle>Sign In</CardTitle>
+          <CardDescription>
+            Enter your credentials to access your account
+          </CardDescription>
+        </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {successMessage && (
+            <Alert className="border-green-200 bg-green-50">
+              <AlertDescription className="text-green-800">
+                {successMessage}
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {formState.error && (
             <Alert variant="destructive">
               <AlertDescription>{formState.error}</AlertDescription>
@@ -144,8 +161,10 @@ export default function LoginPage() {
           </Button>
           
           <div className="text-center space-y-2">
-            <div className="text-sm text-blue-600 hover:underline cursor-pointer">
-              Forgot your password?
+            <div className="text-sm">
+              <Link href="/forgot-password" className="text-blue-600 hover:underline">
+                Forgot your password?
+              </Link>
             </div>
             <div className="text-sm text-gray-600">
               Don&apos;t have an account?{' '}
@@ -157,5 +176,6 @@ export default function LoginPage() {
         </CardFooter>
       </form>
     </Card>
+    </div>
   )
 }

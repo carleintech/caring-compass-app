@@ -145,6 +145,20 @@ module.exports = {
         "slide-in-from-left": "slide-in-from-left 0.3s ease-out",
         "slide-in-from-right": "slide-in-from-right 0.3s ease-out",
       },
+      animationDelay: {
+        '0': '0ms',
+        '75': '75ms',
+        '100': '100ms',
+        '150': '150ms',
+        '200': '200ms',
+        '300': '300ms',
+        '400': '400ms',
+        '450': '450ms',
+        '500': '500ms',
+        '600': '600ms',
+        '750': '750ms',
+        '1000': '1000ms',
+      },
       spacing: {
         '18': '4.5rem',
         '88': '22rem',
@@ -157,7 +171,7 @@ module.exports = {
   plugins: [
     require("tailwindcss-animate"),
     // Add custom plugins for healthcare-specific styles
-    function({ addUtilities }) {
+    function({ addUtilities, theme }) {
       const newUtilities = {
         '.text-balance': {
           'text-wrap': 'balance',
@@ -173,7 +187,17 @@ module.exports = {
           'box-shadow': '0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06)',
         },
       }
-      addUtilities(newUtilities)
+
+      // Add animation delay utilities
+      const animationDelays = theme('animationDelay')
+      const animationDelayUtilities = Object.entries(animationDelays).reduce((acc, [key, value]) => {
+        acc[`.animate-delay-${key}`] = {
+          'animation-delay': value,
+        }
+        return acc
+      }, {})
+
+      addUtilities({...newUtilities, ...animationDelayUtilities})
     }
   ],
 }
