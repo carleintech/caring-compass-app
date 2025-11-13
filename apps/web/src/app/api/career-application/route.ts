@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { UserRole, CaregiverStatus } from '@caring-compass/database'
-import { db } from '@/lib/db'
+import { UserRole, CaregiverStatus, PrismaClient } from '@caring-compass/database'
+
+const db = new PrismaClient()
 
 // Career application schema
 const careerApplicationSchema = z.object({
