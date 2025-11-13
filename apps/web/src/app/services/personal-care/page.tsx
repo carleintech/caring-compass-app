@@ -106,7 +106,7 @@ const testimonials = [
   {
     id: 1,
     name: "Sarah Johnson",
-    location: "Tallahassee, FL",
+    location: "Virginia Beach, VA",
     text: "The personal care services have been absolutely wonderful. Maria is so gentle and respectful with my mother. She treats her with such dignity and care.",
     rating: 5,
     relationship: "Daughter of care recipient"
@@ -114,7 +114,7 @@ const testimonials = [
   {
     id: 2,
     name: "Robert Chen",
-    location: "Gainesville, FL",
+    location: "Norfolk, VA",
     text: "After my father's stroke, we needed someone reliable for his daily care. The team has exceeded our expectations in every way. Professional and compassionate.",
     rating: 5,
     relationship: "Son of care recipient"
@@ -122,7 +122,7 @@ const testimonials = [
   {
     id: 3,
     name: "Emily Rodriguez",
-    location: "Tampa, FL",
+    location: "Chesapeake, VA",
     text: "I was hesitant about having someone help with personal care, but the caregiver makes me feel so comfortable. She's become like family to us.",
     rating: 5,
     relationship: "Care recipient"
@@ -130,7 +130,7 @@ const testimonials = [
   {
     id: 4,
     name: "Michael Thompson",
-    location: "Orlando, FL",
+    location: "Portsmouth, VA",
     text: "The medication management has been a game-changer. We no longer worry about missed doses or confusion. Everything is organized and professional.",
     rating: 5,
     relationship: "Husband of care recipient"
@@ -138,7 +138,7 @@ const testimonials = [
   {
     id: 5,
     name: "Linda Davis",
-    location: "Jacksonville, FL",
+    location: "Hampton, VA",
     text: "The bathing assistance has restored my mother's independence. She feels confident and clean every day. The caregivers are angels.",
     rating: 5,
     relationship: "Daughter of care recipient"
@@ -146,7 +146,7 @@ const testimonials = [
   {
     id: 6,
     name: "James Wilson",
-    location: "Miami, FL",
+    location: "Newport News, VA",
     text: "From grooming to mobility support, every aspect of care is handled with expertise. My wife looks forward to her caregiver's visits every day.",
     rating: 5,
     relationship: "Husband of care recipient"
@@ -183,7 +183,7 @@ export default function PersonalCarePage() {
 
         <ServiceTestimonials
           testimonials={testimonials}
-          title="Trusted by Families Across Florida"
+          title="Trusted by Families Across Hampton Roads"
           subtitle="See why families choose our personal care services for their loved ones"
         />
       </ServicePageLayout>

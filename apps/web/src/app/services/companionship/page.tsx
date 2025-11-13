@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { ConsultationModal } from '@/components/modals/consultation-modal'
 import { 
   Heart, 
   Users, 
@@ -28,7 +30,9 @@ import {
 } from 'lucide-react'
 
 const CompanionshipPage = () => {
+  const router = useRouter()
   const [selectedActivity, setSelectedActivity] = useState(null)
+  const [isConsultationOpen, setIsConsultationOpen] = useState(false)
 
   const companionshipServices = [
     {
@@ -196,6 +200,7 @@ const CompanionshipPage = () => {
                 <Button 
                   size="lg" 
                   className="bg-gradient-to-r from-blue-600 to-teal-500 text-white px-8"
+                  onClick={() => setIsConsultationOpen(true)}
                 >
                   Start Companionship Services
                   <ArrowRight className="ml-2 w-5 h-5" />
@@ -205,9 +210,10 @@ const CompanionshipPage = () => {
                   variant="outline" 
                   size="lg"
                   className="px-8 border-slate-300 hover:bg-slate-50"
+                  onClick={() => window.location.href = 'tel:+17575552273'}
                 >
                   <Phone className="mr-2 w-5 h-5" />
-                  Call (850) 861-0959
+                  Call (757) 555-CARE
                 </Button>
               </div>
 
@@ -524,15 +530,17 @@ const CompanionshipPage = () => {
               <Button 
                 size="lg" 
                 className="bg-white text-blue-600 hover:bg-blue-50 px-8"
+                onClick={() => window.location.href = 'tel:+17575552273'}
               >
                 <Phone className="mr-2 w-5 h-5" />
-                Call (850) 861-0959
+                Call (757) 555-CARE
               </Button>
               
               <Button 
                 variant="outline" 
                 size="lg"
                 className="px-8 border-white text-white hover:bg-white hover:text-blue-600"
+                onClick={() => setIsConsultationOpen(true)}
               >
                 Schedule Free Consultation
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -541,6 +549,12 @@ const CompanionshipPage = () => {
           </div>
         </div>
       </section>
+
+      <ConsultationModal 
+        isOpen={isConsultationOpen}
+        onClose={() => setIsConsultationOpen(false)}
+        serviceType="Companionship Services"
+      />
     </div>
   )
 }

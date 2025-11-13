@@ -1008,14 +1008,14 @@ export default function StunningHomepage() {
                 Providing compassionate, personalized home care that honors your independence and preserves your dignity.
               </p>
               <div className="space-y-2">
-                <div className="flex items-center space-x-2">
+                <a href="tel:+17575552273" className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors">
                   <Phone className="h-4 w-4 text-blue-400" />
                   <span>(757) 555-CARE</span>
-                </div>
-                <div className="flex items-center space-x-2">
+                </a>
+                <a href="mailto:info@caringcompasshomescare.com" className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors">
                   <Mail className="h-4 w-4 text-blue-400" />
-                  <span>info@caringcompass.com</span>
-                </div>
+                  <span>info@caringcompasshomescare.com</span>
+                </a>
                 <div className="flex items-center space-x-2">
                   <MapPin className="h-4 w-4 text-blue-400" />
                   <span>Serving Hampton Roads, VA</span>
@@ -1060,6 +1060,9 @@ export default function StunningHomepage() {
           <div className="border-t border-gray-800 mt-12 pt-8 text-center">
             <p className="text-gray-400">
               © 2024 Caring Compass Home Care LLC. All rights reserved. Licensed & Insured.
+            </p>
+            <p className="text-gray-500 text-sm mt-2">
+              Developed by <a href="https://techklein.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors">TECHKLEIN</a>
             </p>
           </div>
         </div>
