@@ -1,10 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { ConsultationModal } from '@/components/modals/consultation-modal'
 import { 
   Brain, 
   Heart, 
@@ -23,6 +25,8 @@ import {
 } from 'lucide-react'
 
 export default function SpecializedCarePage() {
+  const router = useRouter()
+  const [isConsultationOpen, setIsConsultationOpen] = useState(false)
   const specializedServices = [
     {
       icon: <Brain className="h-8 w-8" />,
@@ -172,11 +176,11 @@ export default function SpecializedCarePage() {
               Expert care for complex medical conditions and special needs
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
+              <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50" onClick={() => window.location.href = 'tel:+17575552273'}>
                 <Phone className="mr-2 h-5 w-5" />
                 Call (757) 555-CARE
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10" onClick={() => setIsConsultationOpen(true)}>
                 Discuss Your Needs
               </Button>
             </div>
@@ -347,7 +351,7 @@ export default function SpecializedCarePage() {
                   ensuring your loved one receives not just expert care, but also the 
                   emotional support they need.
                 </p>
-                <Button className="bg-gradient-to-r from-purple-500 to-blue-500 text-white">
+                <Button className="bg-gradient-to-r from-purple-500 to-blue-500 text-white" onClick={() => router.push('/contact')}>
                   Learn More About Our Approach
                 </Button>
               </div>
@@ -401,11 +405,11 @@ export default function SpecializedCarePage() {
             Expert care tailored to your specific condition and needs
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-            <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50 flex-1">
+            <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50 flex-1" onClick={() => window.location.href = 'tel:+17575552273'}>
               <Phone className="mr-2 h-5 w-5" />
               Call Now
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 flex-1">
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 flex-1" onClick={() => setIsConsultationOpen(true)}>
               <Mail className="mr-2 h-5 w-5" />
               Get Assessment
             </Button>
@@ -415,6 +419,12 @@ export default function SpecializedCarePage() {
           </p>
         </div>
       </div>
+
+      <ConsultationModal 
+        isOpen={isConsultationOpen}
+        onClose={() => setIsConsultationOpen(false)}
+        serviceType="Specialized Care Services"
+      />
     </div>
   )
 }
