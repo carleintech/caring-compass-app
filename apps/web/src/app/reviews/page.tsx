@@ -27,7 +27,11 @@ import {
   Sparkles,
   TrendingUp,
   Send,
-  PenTool
+  PenTool,
+  Share2,
+  Facebook,
+  Twitter,
+  Instagram
 } from 'lucide-react'
 
 export default function ReviewsPage() {
@@ -121,6 +125,35 @@ export default function ReviewsPage() {
     } catch (error) {
       console.error('Error submitting story request:', error)
     }
+  }
+
+  const handleSocialShare = (platform: string, reviewTitle: string) => {
+    const url = encodeURIComponent(window.location.href)
+    const text = encodeURIComponent(`Check out this review: "${reviewTitle}" - Caring Compass Home Care`)
+    
+    let shareUrl = ''
+    switch(platform) {
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`
+        break
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}`
+        break
+      case 'instagram':
+        toast({
+          title: "Instagram Sharing",
+          description: "Please screenshot this review to share on Instagram!"
+        })
+        return
+      default:
+        return
+    }
+    
+    window.open(shareUrl, '_blank', 'width=600,height=400')
+    toast({
+      title: "Thanks for sharing! 🎉",
+      description: "Help spread the word about quality home care."
+    })
   }
 
   const overallStats = {
@@ -706,6 +739,37 @@ export default function ReviewsPage() {
                       <div className="flex items-center space-x-2 text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-full group-hover:bg-gray-100 transition-colors duration-300">
                         <ThumbsUp className="h-4 w-4 text-green-600" />
                         <span className="font-medium">{review.helpful} found helpful</span>
+                      </div>
+                    </div>
+                    
+                    {/* Social Sharing Buttons */}
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-sm text-gray-600 font-medium">Share this review:</span>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSocialShare('facebook', review.title)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-300"
+                        >
+                          <Facebook className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSocialShare('twitter', review.title)}
+                          className="text-sky-600 hover:text-sky-700 hover:bg-sky-50 transition-all duration-300"
+                        >
+                          <Twitter className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSocialShare('instagram', review.title)}
+                          className="text-pink-600 hover:text-pink-700 hover:bg-pink-50 transition-all duration-300"
+                        >
+                          <Instagram className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>
