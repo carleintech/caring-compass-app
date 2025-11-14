@@ -159,6 +159,14 @@ export default function OurStoryPage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-teal-600 text-white">
         <div className="container mx-auto px-4 py-16">
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push('/')}
+            className="text-white hover:bg-white/20 mb-4"
+          >
+            <Home className="mr-2 h-4 w-4" />
+            Back to Home
+          </Button>
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-6">
               <div className="bg-white/20 p-4 rounded-full">
