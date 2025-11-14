@@ -422,11 +422,11 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-                <Button size="lg" className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white flex-1">
+                <Button size="lg" className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white flex-1" onClick={() => window.location.href = 'tel:+17575552273'}>
                   <Phone className="mr-2 h-5 w-5" />
                   Call Us
                 </Button>
-                <Button size="lg" variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50 flex-1">
+                <Button size="lg" variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50 flex-1" onClick={() => window.location.href = 'mailto:info@caringcompasshomescare.com'}>
                   <Mail className="mr-2 h-5 w-5" />
                   Email Us
                 </Button>

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ import {
 } from 'lucide-react'
 
 const AboutPage = () => {
+  const router = useRouter()
   const [expandedMember, setExpandedMember] = useState<number | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
@@ -182,6 +184,7 @@ const AboutPage = () => {
               <Button 
                 size="lg" 
                 className="bg-gradient-to-r from-blue-600 via-purple-600 to-teal-500 text-white px-8 py-6 text-lg shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 group"
+                onClick={() => router.push('/our-story')}
               >
                 <Heart className="mr-2 w-5 h-5 group-hover:animate-pulse" />
                 Our Story
@@ -192,6 +195,7 @@ const AboutPage = () => {
                 variant="outline" 
                 size="lg"
                 className="px-8 py-6 text-lg border-slate-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-teal-50 hover:border-blue-300 transition-all duration-300 backdrop-blur-sm shadow-lg"
+                onClick={() => router.push('/team')}
               >
                 <Users className="mr-2 w-5 h-5" />
                 Meet Our Team
@@ -604,9 +608,10 @@ const AboutPage = () => {
               <Button 
                 size="lg" 
                 className="bg-gradient-to-r from-blue-600 via-purple-600 to-teal-500 text-white px-10 py-6 text-lg shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 group"
+                onClick={() => window.location.href = 'tel:+17575552273'}
               >
                 <Phone className="mr-3 w-6 h-6 group-hover:animate-pulse" />
-                Call (850) 861-0959
+                Call (757) 555-CARE
                 <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </Button>
               
@@ -614,6 +619,7 @@ const AboutPage = () => {
                 variant="outline" 
                 size="lg"
                 className="px-10 py-6 text-lg border-slate-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-teal-50 hover:border-blue-300 transition-all duration-300 backdrop-blur-sm shadow-lg group"
+                onClick={() => router.push('/contact')}
               >
                 <Mail className="mr-3 w-6 h-6 group-hover:animate-bounce" />
                 Contact Us Online
