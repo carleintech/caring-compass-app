@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -51,6 +52,7 @@ import {
 } from 'lucide-react'
 
 export default function StunningHomepage() {
+  const router = useRouter()
   const [serviceModal, setServiceModal] = useState(false)
   const [packageBuilder, setPackageBuilder] = useState({
     personalCare: {},
@@ -353,6 +355,7 @@ export default function StunningHomepage() {
                   size="lg" 
                   variant="outline"
                   className="text-lg px-8 py-4 rounded-full hover:bg-blue-50 transition-all duration-300"
+                  onClick={() => router.push('/our-story')}
                 >
                   <Play className="mr-2 h-5 w-5" />
                   Watch Our Story
