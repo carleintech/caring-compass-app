@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
 import { useServices } from '@/hooks/use-services'
+import { ConsultationModal } from '@/components/modals/consultation-modal'
 import { 
   Star, 
   Heart, 
@@ -38,6 +39,7 @@ export default function ReviewsPage() {
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [isWritingReview, setIsWritingReview] = useState(false)
+  const [isConsultationOpen, setIsConsultationOpen] = useState(false)
   const [newReview, setNewReview] = useState({
     name: '',
     email: '',
@@ -89,20 +91,12 @@ export default function ReviewsPage() {
     })
   }
 
-  const handleGetConsultation = async () => {
-    try {
-      await scheduleConsultation({
-        name: 'Review Page Visitor',
-        email: '',
-        phone: '',
-        preferredDate: new Date().toISOString().split('T')[0],
-        timeSlot: 'morning',
-        serviceType: 'general',
-        notes: 'Interested after reading reviews'
-      })
-    } catch (error) {
-      console.error('Error scheduling consultation:', error)
-    }
+  const handleGetConsultation = () => {
+    setIsConsultationOpen(true)
+    toast({
+      title: "Let's Get Started! 📅",
+      description: "Fill out the form to schedule your free consultation."
+    })
   }
 
   const handleWriteReview = () => {
@@ -1080,6 +1074,13 @@ export default function ReviewsPage() {
           </Card>
         </div>
       </div>
+
+      {/* Consultation Modal */}
+      <ConsultationModal
+        isOpen={isConsultationOpen}
+        onClose={() => setIsConsultationOpen(false)}
+        serviceType="General Care Services"
+      />
     </div>
   )
 }
