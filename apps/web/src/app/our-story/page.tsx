@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +24,8 @@ import {
 } from 'lucide-react'
 
 export default function OurStoryPage() {
+  const router = useRouter()
+  
   const founders = [
     {
       name: "Erickharlein Pierre",
@@ -348,17 +351,20 @@ export default function OurStoryPage() {
                   <CardDescription className="text-blue-600 font-medium">
                     {founder.role}
                   </CardDescription>
-                  <Badge variant="secondary" className="mx-auto">
-                    {founder.ownership} ownership
-                  </Badge>
                 </CardHeader>
-                <CardContent className="text-center">
+                <CardContent className="text-center space-y-4">
                   <p className="text-gray-600 text-sm mb-3">
                     {founder.background}
                   </p>
                   <p className="text-gray-700 text-sm italic">
                     &quot;{founder.passion}&quot;
                   </p>
+                  <Button 
+                    onClick={() => router.push(`/team/${founder.name.toLowerCase().replace(/\s+/g, '-')}`)}
+                    className="bg-gradient-to-r from-blue-500 to-teal-500 text-white hover:from-blue-600 hover:to-teal-600 w-full mt-3"
+                  >
+                    View Full Bio
+                  </Button>
                 </CardContent>
               </Card>
             ))}
