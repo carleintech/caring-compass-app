@@ -20,7 +20,7 @@
     "@trpc/react-query": "^10.45.0",
     "@trpc/server": "^10.45.0",
     "bcryptjs": "^2.4.3",
-    "next": "^15.4.6",
+    "next": "15.4.10",
     "superjson": "^2.2.1",
     "zod": "^3.22.4"
   },
