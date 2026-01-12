@@ -15,7 +15,6 @@ import {
   DollarSign, 
   AlertCircle,
   CheckCircle,
-  Clock,
   MapPin,
   Phone,
   Mail,
