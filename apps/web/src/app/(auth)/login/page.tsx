@@ -84,7 +84,7 @@ export default function LoginPage() {
         setError('This email is not registered. Please contact your coordinator to create an account.')
       }
     },
-    onError: (error: { message: string }) => {
+    onError: () => {
       setError('Unable to verify email. Please try again.')
     }
   })
