@@ -15,7 +15,6 @@ import {
   DollarSign, 
   AlertCircle,
   CheckCircle,
-  MapPin,
   Phone,
   Mail,
   UserPlus,
