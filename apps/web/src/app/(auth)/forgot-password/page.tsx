@@ -1,162 +1,226 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { BackToHomeButton } from '@/components/ui/back-to-home-button'
-import { ArrowLeft, Mail, CheckCircle } from 'lucide-react'
+import { trpc } from '@/lib/trpc'
+import { Mail, ArrowLeft, CheckCircle, Shield, AlertCircle, Loader2 } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
-  const router = useRouter()
-  
-  const [formState, setFormState] = useState({
-    email: '',
-    isSubmitted: false,
-    isLoading: false,
-    error: ''
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
+  const [isSubmitted, setIsSubmitted] = useState(false)
+
+  const resetMutation = (trpc as any).auth.requestPasswordReset.useMutation({
+    onSuccess: () => {
+      setIsSubmitted(true)
+    },
+    onError: (error: { message: string }) => {
+      setError(error.message || 'Failed to send reset email. Please try again.')
+    }
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!formState.email) {
-      setFormState(prev => ({ ...prev, error: 'Email is required' }))
+    setError('')
+
+    if (!email) {
+      setError('Please enter your email address')
       return
     }
 
-    setFormState(prev => ({ ...prev, isLoading: true, error: '' }))
-
-    try {
-      // TODO: Implement password reset with Supabase
-      // For now, we'll simulate the request
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Mock success - in real implementation, this would call Supabase auth.resetPasswordForEmail
-      setFormState(prev => ({ 
-        ...prev, 
-        isSubmitted: true, 
-        isLoading: false 
-      }))
-    } catch (error) {
-      setFormState(prev => ({ 
-        ...prev, 
-        error: 'Failed to send reset email. Please try again.',
-        isLoading: false 
-      }))
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address')
+      return
     }
+
+    resetMutation.mutate({ email })
   }
 
-  const handleChange = (field: string, value: string) => {
-    setFormState(prev => ({ ...prev, [field]: value, error: '' }))
+  const handleTryAgain = () => {
+    setIsSubmitted(false)
+    setEmail('')
+    setError('')
   }
 
-  if (formState.isSubmitted) {
+  if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+      <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 relative">
+        {/* Subtle background pattern */}
+        <div className="absolute inset-0 opacity-[0.015]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, slate 1px, transparent 0)`,
+            backgroundSize: '32px 32px'
+          }}></div>
+        </div>
+
+        <div className="relative min-h-screen flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-md">
+            {/* Success Card */}
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-fade-in">
+              {/* Success Icon */}
+              <div className="px-8 pt-12 pb-6 text-center">
+                <div className="flex justify-center mb-6">
+                  <div className="bg-emerald-100 p-4 rounded-full">
+                    <CheckCircle className="w-12 h-12 text-emerald-600" />
+                  </div>
+                </div>
+                <h1 className="text-2xl font-serif font-bold text-slate-900 mb-2">
+                  Check Your Email
+                </h1>
+                <p className="text-sm text-slate-600">
+                  We've sent password reset instructions to
+                </p>
+                <p className="text-sm font-medium text-slate-900 mt-1">
+                  {email}
+                </p>
+              </div>
+
+              {/* Content */}
+              <div className="px-8 pb-8 space-y-6">
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                  <p className="text-sm text-slate-600 text-center">
+                    Click the link in the email to reset your password. The link will expire in 1 hour.
+                  </p>
+                </div>
+
+                <div className="text-center text-sm text-slate-600">
+                  <p>Didn't receive the email?</p>
+                  <p className="mt-1">Check your spam folder or</p>
+                  <Button 
+                    variant="link" 
+                    onClick={handleTryAgain}
+                    className="p-0 h-auto text-slate-900 font-medium hover:underline mt-1"
+                  >
+                    try again
+                  </Button>
+                </div>
+
+                <Link href="/login">
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-12 border-slate-300 hover:bg-slate-50"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Sign In
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <CardTitle className="text-2xl">Check Your Email</CardTitle>
-            <CardDescription>
-              We&apos;ve sent password reset instructions to {formState.email}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center text-sm text-gray-600">
-              <p>Didn&apos;t receive the email? Check your spam folder or</p>
-              <Button 
-                variant="link" 
-                onClick={() => setFormState(prev => ({ ...prev, isSubmitted: false }))}
-                className="p-0 h-auto text-blue-600"
-              >
-                try again
-              </Button>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <Link href="/login">
-              <Button variant="outline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Sign In
-              </Button>
-            </Link>
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-      <div className="w-full max-w-md space-y-6">
-        <BackToHomeButton />
-        
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <Mail className="h-6 w-6 text-blue-600" />
-            </div>
-            <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-            <CardDescription>
-              Enter your email address and we&apos;ll send you a link to reset your password
-            </CardDescription>
-          </CardHeader>
-          
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              {formState.error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{formState.error}</AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={formState.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  required
-                  disabled={formState.isLoading}
-                />
+    <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 relative">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 opacity-[0.015]">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, slate 1px, transparent 0)`,
+          backgroundSize: '32px 32px'
+        }}></div>
+      </div>
+
+      <div className="relative min-h-screen flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          {/* Back to Home */}
+          <div className="mb-8 animate-fade-in">
+            <BackToHomeButton />
+          </div>
+
+          {/* Main Card */}
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-fade-in">
+            {/* Header */}
+            <div className="px-8 pt-8 pb-6 text-center border-b border-slate-100">
+              <div className="flex justify-center mb-4">
+                <div className="bg-slate-100 p-3 rounded-xl">
+                  <Mail className="w-7 h-7 text-slate-700" />
+                </div>
               </div>
-            </CardContent>
-            
-            <CardFooter className="flex flex-col space-y-4">
+              <h1 className="text-2xl font-serif font-bold text-slate-900 mb-2">
+                Reset Your Password
+              </h1>
+              <p className="text-sm text-slate-600">
+                Enter your email and we'll send you a reset link
+              </p>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mx-8 mt-6">
+                <Alert variant="destructive" className="animate-fade-in">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="ml-2 text-sm">{error}</AlertDescription>
+                </Alert>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 pl-11 border-slate-300 focus:border-slate-900 focus:ring-slate-900 text-base"
+                    autoFocus
+                    required
+                  />
+                </div>
+              </div>
+
               <Button 
                 type="submit" 
-                className="w-full"
-                disabled={formState.isLoading}
+                className="w-full h-12 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-medium shadow-md transition-all"
+                disabled={resetMutation.isPending}
               >
-                {formState.isLoading ? (
+                {resetMutation.isPending ? (
                   <>
-                    <LoadingSpinner className="mr-2 h-4 w-4" />
-                    Sending Reset Link...
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
                   </>
                 ) : (
                   'Send Reset Link'
                 )}
               </Button>
-              
+
               <div className="text-center">
-                <Link href="/login" className="text-sm text-blue-600 hover:underline">
-                  <ArrowLeft className="inline mr-1 h-3 w-3" />
+                <Link 
+                  href="/login" 
+                  className="inline-flex items-center text-sm text-slate-600 hover:text-slate-900 font-medium"
+                >
+                  <ArrowLeft className="mr-1 h-3 w-3" />
                   Back to Sign In
                 </Link>
               </div>
-            </CardFooter>
-          </form>
-        </Card>
+            </form>
+
+            {/* Footer - Trust Indicators */}
+            <div className="px-8 py-6 bg-slate-50 border-t border-slate-100">
+              <div className="flex items-center justify-center gap-2">
+                <Shield className="h-4 w-4 text-slate-500" />
+                <span className="text-xs text-slate-600 font-medium">
+                  Secure password reset process
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

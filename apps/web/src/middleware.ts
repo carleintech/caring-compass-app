@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
+// Use Supabase JWT secret to verify tokens signed by Supabase Auth
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key'
+  process.env.SUPABASE_JWT_SECRET || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-secret-key'
 )
 
 interface TokenPayload {
@@ -40,23 +41,27 @@ const routeConfig = {
     // Admin and Coordinator routes
     admin: [
       '/admin',
-      '/coordinator'
+      '/admin/dashboard',
+      '/coordinator',
+      '/coordinator/dashboard'
     ],
     
     // Caregiver routes
     caregiver: [
-      '/caregiver'
+      '/caregiver',
+      '/caregiver/dashboard'
     ],
     
     // Client and Family routes
     client: [
       '/client',
-      '/family'
+      '/client/dashboard',
+      '/family',
+      '/family/dashboard'
     ],
     
-    // General authenticated routes
+    // General authenticated routes (NO /dashboard here!)
     authenticated: [
-      '/dashboard',
       '/profile',
       '/messages',
       '/documents'

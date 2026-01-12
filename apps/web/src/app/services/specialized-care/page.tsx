@@ -163,6 +163,14 @@ export default function SpecializedCarePage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
         <div className="container mx-auto px-4 py-16">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/')}
+            className="mb-6 border-white text-white hover:bg-white/10"
+          >
+            ← Back to Home
+          </Button>
+
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-6">
               <div className="bg-white/20 p-4 rounded-full">

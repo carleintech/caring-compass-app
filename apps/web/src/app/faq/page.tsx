@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react'
 
 export default function FAQPage() {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
   const [expandedItems, setExpandedItems] = useState<number[]>([])
@@ -181,6 +183,14 @@ export default function FAQPage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-teal-600 text-white">
         <div className="container mx-auto px-4 py-16">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/')}
+            className="mb-6 border-white text-white hover:bg-white/10"
+          >
+            ← Back to Home
+          </Button>
+
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-6">
               <div className="bg-white/20 p-4 rounded-full">

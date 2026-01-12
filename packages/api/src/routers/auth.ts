@@ -22,6 +22,36 @@ export const authRouter = createTRPCRouter({
   // ===== AUTHENTICATION =====
   
   /**
+   * Check if email exists and return user role (for smart login)
+   */
+  checkEmail: authProcedure
+    .input(z.object({ email: z.string().email() }))
+    .output(z.object({ 
+      exists: z.boolean(),
+      role: z.enum(['CAREGIVER', 'CLIENT', 'FAMILY', 'ADMIN', 'COORDINATOR']).optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const user = await ctx.prisma.users.findUnique({
+          where: { email: input.email.toLowerCase() },
+          select: { role: true }
+        })
+        
+        if (!user) {
+          return { exists: false }
+        }
+        
+        return {
+          exists: true,
+          role: user.role
+        }
+      } catch (error) {
+        // Silent error to prevent email enumeration
+        return { exists: false }
+      }
+    }),
+  
+  /**
    * User login
    */
   signIn: loginProcedure

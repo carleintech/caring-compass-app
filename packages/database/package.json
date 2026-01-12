@@ -10,7 +10,8 @@
     "studio": "prisma studio",
     "push": "prisma db push",
     "reset": "prisma migrate reset",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seed.ts",
+    "seed:master": "tsx src/seed-master-accounts.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",

@@ -1,32 +1,33 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { BackToHomeButton } from '@/components/ui/back-to-home-button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { trpc } from '@/lib/trpc'
-import { EyeIcon, EyeOffIcon, CheckCircleIcon } from 'lucide-react'
+
+// Import wizard components
+import { ProgressBar } from './components/ProgressBar'
+import { WizardButtons } from './components/WizardButtons'
+import { Step1ChooseRole } from './steps/Step1ChooseRole'
+import { Step2CaregiverForm } from './steps/Step2CaregiverForm'
+import { Step2ClientForm } from './steps/Step2ClientForm'
+import { Step2FamilyForm } from './steps/Step2FamilyForm'
+import { Step3Account } from './steps/Step3Account'
+import { Step4Agreements } from './steps/Step4Agreements'
+import { Step5Success } from './steps/Step5Success'
 
 export default function RegisterPage() {
-  const router = useRouter()
+  const [currentStep, setCurrentStep] = useState(1)
+  const [error, setError] = useState('')
+  const totalSteps = 5
+
+  // Form data state
   const [formData, setFormData] = useState({
+    role: '',
     firstName: '',
     lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    role: 'CAREGIVER', // Add role selection
     dateOfBirth: '',
+    phone: '',
     address: '',
     city: '',
     state: 'VA',
@@ -36,408 +37,298 @@ export default function RegisterPage() {
     certificationDetails: '',
     experience: '',
     availability: '',
+    careType: '',
+    hoursPerWeek: '',
+    preferredGender: '',
+    mobilityLimitations: '',
+    householdInfo: '',
+    relationship: '',
+    patientFirstName: '',
+    patientLastName: '',
+    patientDateOfBirth: '',
+    careReason: '',
+    emergencyContact: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
     agreeToTerms: false,
+    agreeToPrivacy: false,
     agreeToBackground: false
   })
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
 
-  const registerMutation = trpc.auth.register.useMutation({
+  const registerMutation = (trpc as any).auth.register.useMutation({
     onSuccess: () => {
-      setSuccess(true)
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        router.push('/login?message=Registration successful. Please sign in.')
-      }, 3000)
+      setCurrentStep(5)
     },
-    onError: (error) => {
+    onError: (error: { message: string }) => {
       setError(error.message)
     }
   })
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
     setError('')
-
-    // Validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.password) {
-      setError('Please fill in all required fields')
-      return
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long')
-      return
-    }
-
-    if (!formData.agreeToTerms || !formData.agreeToBackground) {
-      setError('Please accept the terms and background check consent')
-      return
-    }
-
-    registerMutation.mutate({
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      password: formData.password,
-      role: formData.role as 'CAREGIVER' | 'CLIENT' | 'FAMILY' // Use selected role
-    })
   }
 
-  if (success) {
-    return (
-      <Card className="w-full">
-        <CardHeader className="text-center">
-          <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <CardTitle className="text-green-600">Registration Successful!</CardTitle>
-          <CardDescription>
-            Your account has been created successfully. Redirecting you to sign in...
-          </CardDescription>
-        </CardHeader>
-        <CardFooter className="flex flex-col gap-4">
-          <div className="w-full text-center">
-            <LoadingSpinner size="sm" className="mx-auto mb-2" />
-            <p className="text-sm text-gray-600">Redirecting in 3 seconds...</p>
-          </div>
-          <Button 
-            onClick={() => router.push('/login')}
-            className="w-full"
-          >
-            Go to Sign In Now
-          </Button>
-          <Link href="/" className="text-blue-600 hover:underline text-center">
-            Return to Home
-          </Link>
-        </CardFooter>
-      </Card>
-    )
+  const handleRoleSelect = (role: 'CAREGIVER' | 'CLIENT' | 'FAMILY') => {
+    setFormData(prev => ({ ...prev, role }))
+    setError('')
+  }
+
+  const validateStep = (step: number): boolean => {
+    if (step === 1) {
+      if (!formData.role) {
+        setError('Please select your role')
+        return false
+      }
+      return true
+    }
+    
+    if (step === 2) {
+      if (!formData.firstName || !formData.lastName || !formData.phone) {
+        setError('Please fill in all required fields')
+        return false
+      }
+      if (formData.role === 'CAREGIVER' && !formData.experience) {
+        setError('Please describe your caregiving experience')
+        return false
+      }
+      return true
+    }
+    
+    if (step === 3) {
+      if (!formData.email || !formData.password || !formData.confirmPassword) {
+        setError('Please fill in all account fields')
+        return false
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match')
+        return false
+      }
+      if (formData.password.length < 8) {
+        setError('Password must be at least 8 characters long')
+        return false
+      }
+      return true
+    }
+    
+    if (step === 4) {
+      if (!formData.agreeToTerms || !formData.agreeToPrivacy) {
+        setError('Please accept the required agreements')
+        return false
+      }
+      if (formData.role === 'CAREGIVER' && !formData.agreeToBackground) {
+        setError('Caregivers must consent to background check')
+        return false
+      }
+      return true
+    }
+    
+    return true
+  }
+
+  const handleNext = () => {
+    setError('')
+    
+    if (!validateStep(currentStep)) {
+      return
+    }
+
+    if (currentStep === 4) {
+      registerMutation.mutate({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        role: formData.role as 'CAREGIVER' | 'CLIENT' | 'FAMILY'
+      })
+      return
+    }
+
+    setCurrentStep(prev => Math.min(prev + 1, totalSteps))
+  }
+
+  const handleBack = () => {
+    setError('')
+    setCurrentStep(prev => Math.max(prev - 1, 1))
+  }
+
+  const canProceed = (): boolean => {
+    if (currentStep === 1) return !!formData.role
+    if (currentStep === 2) return !!(formData.firstName && formData.lastName && formData.phone)
+    if (currentStep === 3) return !!(formData.email && formData.password && formData.confirmPassword && 
+             formData.password === formData.confirmPassword && formData.password.length >= 8)
+    if (currentStep === 4) return formData.agreeToTerms && formData.agreeToPrivacy && 
+           (formData.role !== 'CAREGIVER' || formData.agreeToBackground)
+    return true
+  }
+
+  const renderStep = () => {
+    if (currentStep === 1) {
+      return <Step1ChooseRole selectedRole={formData.role} onRoleSelect={handleRoleSelect} />
+    }
+    
+    if (currentStep === 2) {
+      if (formData.role === 'CAREGIVER') {
+        return (
+          <Step2CaregiverForm
+            formData={{
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              dateOfBirth: formData.dateOfBirth,
+              phone: formData.phone,
+              address: formData.address,
+              city: formData.city,
+              state: formData.state,
+              zipCode: formData.zipCode,
+              hasTransportation: formData.hasTransportation,
+              hasCertification: formData.hasCertification,
+              certificationDetails: formData.certificationDetails,
+              experience: formData.experience,
+              availability: formData.availability
+            }}
+            onChange={handleInputChange}
+          />
+        )
+      }
+      if (formData.role === 'CLIENT') {
+        return (
+          <Step2ClientForm
+            formData={{
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              dateOfBirth: formData.dateOfBirth,
+              phone: formData.phone,
+              address: formData.address,
+              city: formData.city,
+              state: formData.state,
+              zipCode: formData.zipCode,
+              careType: formData.careType,
+              hoursPerWeek: formData.hoursPerWeek,
+              preferredGender: formData.preferredGender,
+              mobilityLimitations: formData.mobilityLimitations,
+              householdInfo: formData.householdInfo
+            }}
+            onChange={handleInputChange}
+          />
+        )
+      }
+      if (formData.role === 'FAMILY') {
+        return (
+          <Step2FamilyForm
+            formData={{
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              phone: formData.phone,
+              relationship: formData.relationship,
+              patientFirstName: formData.patientFirstName,
+              patientLastName: formData.patientLastName,
+              patientDateOfBirth: formData.patientDateOfBirth,
+              address: formData.address,
+              city: formData.city,
+              state: formData.state,
+              zipCode: formData.zipCode,
+              careReason: formData.careReason,
+              emergencyContact: formData.emergencyContact
+            }}
+            onChange={handleInputChange}
+          />
+        )
+      }
+      return null
+    }
+    
+    if (currentStep === 3) {
+      return (
+        <Step3Account
+          formData={{
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword
+          }}
+          onChange={handleInputChange}
+        />
+      )
+    }
+    
+    if (currentStep === 4) {
+      return (
+        <Step4Agreements
+          formData={{
+            agreeToTerms: formData.agreeToTerms,
+            agreeToPrivacy: formData.agreeToPrivacy,
+            agreeToBackground: formData.agreeToBackground
+          }}
+          onChange={handleInputChange}
+          role={formData.role}
+        />
+      )
+    }
+    
+    if (currentStep === 5) {
+      return <Step5Success />
+    }
+    
+    return null
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-start">
-        <BackToHomeButton />
+    <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+          backgroundSize: '40px 40px'
+        }}></div>
       </div>
-      
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle>Join Our Caregiving Team</CardTitle>
-        <CardDescription>
-          Apply to become a certified caregiver with Caring Compass
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-6">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-[120px]"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-slate-500/5 rounded-full blur-[100px]"></div>
+      </div>
+
+      <div className="relative min-h-screen w-full py-12">
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {currentStep < 5 && (
+            <div className="mb-8 animate-fade-in">
+              <BackToHomeButton />
+            </div>
           )}
-          
-          {/* Account Type Selection */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Account Type</h3>
-            <div className="space-y-2">
-              <Label htmlFor="role">I am registering as a:</Label>
-              <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CAREGIVER">Caregiver - I want to provide care services</SelectItem>
-                  <SelectItem value="CLIENT">Client - I need care services for myself</SelectItem>
-                  <SelectItem value="FAMILY">Family Member - I'm arranging care for a family member</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {/* Personal Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Personal Information</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  disabled={registerMutation.isPending}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  disabled={registerMutation.isPending}
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  disabled={registerMutation.isPending}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number *</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  disabled={registerMutation.isPending}
-                  required
-                />
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="dateOfBirth">Date of Birth</Label>
-              <Input
-                id="dateOfBirth"
-                type="date"
-                value={formData.dateOfBirth}
-                onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                disabled={registerMutation.isPending}
-              />
-            </div>
-          </div>
+          {currentStep < 5 && (
+            <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
+          )}
 
-          {/* Address */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Address</h3>
-            <div className="space-y-2">
-              <Label htmlFor="address">Street Address</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                disabled={registerMutation.isPending}
-              />
+          {error && currentStep < 5 && (
+            <div className="max-w-3xl mx-auto mb-6 animate-fade-in">
+              <Alert variant="destructive" className="border-red-200 bg-red-50">
+                <AlertDescription className="text-red-800">{error}</AlertDescription>
+              </Alert>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  disabled={registerMutation.isPending}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="VA">Virginia</SelectItem>
-                    <SelectItem value="NC">North Carolina</SelectItem>
-                    <SelectItem value="MD">Maryland</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">ZIP Code</Label>
-                <Input
-                  id="zipCode"
-                  value={formData.zipCode}
-                  onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                  disabled={registerMutation.isPending}
-                />
-              </div>
-            </div>
-          </div>
+          )}
 
-          {/* Password */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Account Security</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    disabled={registerMutation.isPending}
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                    disabled={registerMutation.isPending}
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Experience & Qualifications */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Experience & Qualifications</h3>
-            
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="hasTransportation"
-                  checked={formData.hasTransportation}
-                  onCheckedChange={(checked) => handleInputChange('hasTransportation', !!checked)}
-                />
-                <Label htmlFor="hasTransportation">I have reliable transportation</Label>
-              </div>
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden animate-fade-in">
+            <div className="p-8 sm:p-12">
+              {renderStep()}
               
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="hasCertification"
-                  checked={formData.hasCertification}
-                  onCheckedChange={(checked) => handleInputChange('hasCertification', !!checked)}
-                />
-                <Label htmlFor="hasCertification">I have CNA, PCA, or HHA certification</Label>
-              </div>
-            </div>
-
-            {formData.hasCertification && (
-              <div className="space-y-2">
-                <Label htmlFor="certificationDetails">Certification Details</Label>
-                <Textarea
-                  id="certificationDetails"
-                  placeholder="Please specify your certification type, issuing organization, and expiration date"
-                  value={formData.certificationDetails}
-                  onChange={(e) => handleInputChange('certificationDetails', e.target.value)}
-                  disabled={registerMutation.isPending}
-                />
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="experience">Caregiving Experience</Label>
-              <Textarea
-                id="experience"
-                placeholder="Please describe your experience in caregiving, including years of experience and types of care provided"
-                value={formData.experience}
-                onChange={(e) => handleInputChange('experience', e.target.value)}
-                disabled={registerMutation.isPending}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="availability">Availability</Label>
-              <Textarea
-                id="availability"
-                placeholder="Please describe your availability (days of week, preferred hours, etc.)"
-                value={formData.availability}
-                onChange={(e) => handleInputChange('availability', e.target.value)}
-                disabled={registerMutation.isPending}
-              />
+              {currentStep < 5 && (
+                <div className="mt-8">
+                  <WizardButtons
+                    currentStep={currentStep}
+                    onBack={handleBack}
+                    onNext={handleNext}
+                    isLoading={registerMutation.isPending}
+                    canProceed={canProceed()}
+                    nextLabel={currentStep === 4 ? 'Submit Registration' : 'Continue'}
+                  />
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Agreements */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Agreements</h3>
-            <div className="space-y-3">
-              <div className="flex items-start space-x-2">
-                <Checkbox
-                  id="agreeToTerms"
-                  checked={formData.agreeToTerms}
-                  onCheckedChange={(checked) => handleInputChange('agreeToTerms', !!checked)}
-                />
-                <Label htmlFor="agreeToTerms" className="text-sm leading-relaxed">
-                  I agree to the <Link href={"/terms" as any} className="text-blue-600 hover:underline">Terms of Service</Link> and <Link href={"/privacy" as any} className="text-blue-600 hover:underline">Privacy Policy</Link>
-                </Label>
-              </div>
-              
-              <div className="flex items-start space-x-2">
-                <Checkbox
-                  id="agreeToBackground"
-                  checked={formData.agreeToBackground}
-                  onCheckedChange={(checked) => handleInputChange('agreeToBackground', !!checked)}
-                />
-                <Label htmlFor="agreeToBackground" className="text-sm leading-relaxed">
-                  I consent to a background check and understand that employment is contingent upon satisfactory results
-                </Label>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-        
-        <CardFooter className="flex flex-col space-y-4">
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={registerMutation.isPending}
-          >
-            {registerMutation.isPending ? (
-              <>
-                <LoadingSpinner className="mr-2 h-4 w-4" />
-                Submitting Application...
-              </>
-            ) : (
-              'Submit Application'
-            )}
-          </Button>
-          
-          <div className="text-center">
-            <Link href="/login" className="text-sm text-blue-600 hover:underline">
-              Already have an account? Sign in
-            </Link>
-          </div>
-        </CardFooter>
-      </form>
-    </Card>
+        </div>
+      </div>
     </div>
   )
 }

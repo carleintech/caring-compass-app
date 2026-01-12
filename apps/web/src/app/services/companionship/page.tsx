@@ -180,6 +180,14 @@ const CompanionshipPage = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-teal-50" />
         
         <div className="relative container mx-auto px-4">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/')}
+            className="mb-6 hover:bg-slate-100"
+          >
+            ← Back to Home
+          </Button>
+
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <Badge className="mb-6 bg-blue-100 text-blue-700 border-blue-200">

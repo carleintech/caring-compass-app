@@ -8,6 +8,7 @@ import { billingRouter } from './billing'
 import { messagingRouter } from './messaging'
 import { documentsRouter } from './documents'
 import { adminRouter } from './admin'
+import { coordinatorRouter } from './coordinator'
 import { servicesRouter } from './services'
 
 /**
@@ -32,6 +33,7 @@ export const appRouter: RouterTypes['AppRouter'] = createTRPCRouter({
   
   // Administrative functions
   admin: adminRouter,
+  coordinator: coordinatorRouter,
   
   // Services and availability
   services: servicesRouter,
@@ -50,5 +52,6 @@ export {
   messagingRouter,
   documentsRouter,
   adminRouter,
+  coordinatorRouter,
   servicesRouter,
 }

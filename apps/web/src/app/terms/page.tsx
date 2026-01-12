@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react'
 
 export default function TermsOfServicePage() {
+  const router = useRouter()
   const lastUpdated = "August 20, 2025"
 
   const termsSection = [
@@ -112,6 +114,14 @@ export default function TermsOfServicePage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-600 to-gray-600 text-white">
         <div className="container mx-auto px-4 py-16">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/')}
+            className="mb-6 border-white text-white hover:bg-white/10"
+          >
+            ← Back to Home
+          </Button>
+
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-6">
               <div className="bg-white/20 p-4 rounded-full">
@@ -434,11 +444,20 @@ export default function TermsOfServicePage() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-                <Button size="lg" className="bg-gradient-to-r from-slate-500 to-gray-500 text-white flex-1">
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-slate-500 to-gray-500 text-white flex-1"
+                  onClick={() => window.location.href = 'tel:+17575552273'}
+                >
                   <Phone className="mr-2 h-5 w-5" />
                   Call (757) 555-CARE
                 </Button>
-                <Button size="lg" variant="outline" className="border-slate-500 text-slate-600 hover:bg-slate-50 flex-1">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-slate-500 text-slate-600 hover:bg-slate-50 flex-1"
+                  onClick={() => window.location.href = 'mailto:info@caringcompasshomecare.com'}
+                >
                   <Mail className="mr-2 h-5 w-5" />
                   Email Us
                 </Button>

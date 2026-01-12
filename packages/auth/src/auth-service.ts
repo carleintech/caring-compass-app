@@ -76,7 +76,7 @@ export class AuthService {
       }
 
       // Update last login
-      await this.prisma.user.update({
+      await this.prisma.users.update({
         where: { id: user.id },
         data: { lastLoginAt: new Date() }
       })
@@ -112,7 +112,7 @@ export class AuthService {
       this.validatePassword(credentials.password)
 
       // Check if user already exists
-      const existingUser = await this.prisma.user.findUnique({
+      const existingUser = await this.prisma.users.findUnique({
         where: { email: credentials.email }
       })
 
@@ -132,7 +132,7 @@ export class AuthService {
       }
 
       // Create user profile in database
-      const user = await this.prisma.user.create({
+      const user = await this.prisma.users.create({
         data: {
           id: authData.user.id,
           email: credentials.email,
@@ -190,7 +190,7 @@ export class AuthService {
   async resetPassword(request: PasswordResetRequest, metadata?: Record<string, any>): Promise<void> {
     try {
       // Check if user exists
-      const user = await this.prisma.user.findUnique({
+      const user = await this.prisma.users.findUnique({
         where: { email: request.email }
       })
 
@@ -266,7 +266,7 @@ export class AuthService {
       }
 
       // Update email in database
-      await this.prisma.user.update({
+      await this.prisma.users.update({
         where: { id: userId },
         data: { email: request.newEmail }
       })
@@ -290,7 +290,7 @@ export class AuthService {
   // ===== USER MANAGEMENT =====
 
   async getUserById(id: string): Promise<AuthUser | null> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { id }
     })
 
@@ -302,14 +302,14 @@ export class AuthService {
       role: user.role,
       isActive: user.isActive,
       emailVerified: true, // Managed by Supabase
-      lastLoginAt: user.lastLoginAt || undefined,
+      lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     }
   }
 
   async getUserByEmail(email: string): Promise<AuthUser | null> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { email }
     })
 
@@ -344,7 +344,7 @@ export class AuthService {
   async inviteUser(request: InviteUserRequest, invitedBy: string): Promise<UserInvite> {
     try {
       // Check if user already exists
-      const existingUser = await this.prisma.user.findUnique({
+      const existingUser = await this.prisma.users.findUnique({
         where: { email: request.email }
       })
 
@@ -357,7 +357,7 @@ export class AuthService {
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
       // Create invite record
-      const invite = await this.prisma.userInvite.create({
+      const invite = await this.prisma.user_invites.create({
         data: {
           email: request.email,
           role: request.role,
@@ -446,7 +446,7 @@ export class AuthService {
   private async createRoleProfile(userId: string, credentials: RegisterCredentials): Promise<void> {
     switch (credentials.role) {
       case UserRole.CLIENT:
-        await this.prisma.clientProfile.create({
+        await this.prisma.client_profiles.create({
           data: {
             userId,
             firstName: credentials.firstName,
@@ -468,7 +468,7 @@ export class AuthService {
         break
 
       case UserRole.CAREGIVER:
-        await this.prisma.caregiverProfile.create({
+        await this.prisma.caregiver_profiles.create({
           data: {
             userId,
             firstName: credentials.firstName,
@@ -491,7 +491,7 @@ export class AuthService {
 
       case UserRole.COORDINATOR:
       case UserRole.ADMIN:
-        await this.prisma.coordinatorProfile.create({
+        await this.prisma.coordinator_profiles.create({
           data: {
             userId,
             firstName: credentials.firstName,
@@ -557,7 +557,7 @@ export class AuthService {
 
   private async logAuthEvent(event: Partial<AuthAuditEvent> & { action: AuthAction }): Promise<void> {
     try {
-      await this.prisma.auditLog.create({
+      await this.prisma.audit_logs.create({
         data: {
           userId: event.userId,
           action: event.action as any, // Type assertion needed here
