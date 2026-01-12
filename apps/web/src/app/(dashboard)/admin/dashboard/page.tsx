@@ -10,7 +10,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { BackToHomeButton } from '@/components/ui/back-to-home-button'
 import { 
   TrendingUp, 
-  TrendingDown, 
   Users, 
   Calendar, 
   DollarSign, 
